@@ -1,1 +1,3 @@
-# cypria-query-language
+# Cypria
+
+## Functionality
