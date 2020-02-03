@@ -1,0 +1,101 @@
+
+(** Prebuilt *)
+count target TABLE : attribute -> table -> int 
+
+(** Get the reservations where the sailor who made the reservation only made one reservation. *)
+TABLES.RESERVES > 
+filter (fun (s,b) -> 
+    let cnt = count s TABLES.RESERVERS in 
+    cnt = 1
+) 
+
+sailors: sid name 
+
+(** Select sailors with SID above 10 *)
+TABLES.SAILORS |>
+filter (SAILORS.SID > 10) 
+
+= 
+filter (SAILORS.SID > 10) TABLES.Sailors
+
+(** Evaluates down to *)
+
+SELECT * FROM SAILORS WHERE SAILORS.SID > 10 
+
+SELECT <attributes> FROM <tables> WHERE <condition>
+
+(** Select sailors with SID above 10 and below 10000*)
+TABLES.SAILORS |>
+filter (SAILORS.SID > 10) |>
+filter (SAILORS.SID < 1000)
+
+
+
+(** Evaluates down to *)
+
+SELECT * FROM (SELECT * FROM SAILORS WHERE SAILORS.SID > 10) WHERE SAILORS.SID < 1000 
+
+
+Reserves: sid bid date 
+(** --- *)
+
+filter (SAILORS.SID > 10 && exists (TABLES.RESERVES |> filter (SAILORS.sid = RESERVERS.sid))) TABLES.SAILORS
+
+let ast = Filter Bool (And (SQL_bool "SAILORS.SID > 10") Exists (Filter (Bool (SQL_bool "SAILORS.sid = RESERVERS.sid"), Table "SAILORS")))
+
+
+(** Gives the SQL: *)
+SELECT * FROM SAILORS WHERE SAILORS.SID > 10 AND EXISTS (SELECT * FROM RESERVES WHERE SAILORS.sid = RESERVERS.sid)
+
+exists: table -> bool
+filter : bool -> table -> table
+map: map_configuration -> table -> table
+project_cols : attribute list -> map_configuration
+
+
+type 'a my_lst = 
+| Nil 
+| Cons 'a * my_lst 
+
+Cons (3, Nil) : my_lst 
+
+Cons(3, Cons ("hello", Nil))
+
+type expression = 
+| Filter bool * expression
+| Table string
+| Map map_configuration * expression
+and bool = 
+| SQL_bool string 
+| And bool * bool 
+| Exists expression 
+ 
+type SQLString = string
+
+TABLES.RESERVERS
+
+Filter (“sailors.sid > 10”) (Table “Sailors”)
+
+let rec eval ast : SQLString = 
+    match ast with 
+    | Filter (bool, expr : exp) -> eval_filter (bool_str, tbl)
+    | Table (table_str) -> eval_table (table_str)
+and eval_filter (bool, tbl) -> "SELECT * FROM (" ^ (eval tbl) ^ ") WHERE (" ^ (eval_bool bool) ")"
+and eval_table 
+and eval_bool b = 
+    match b with 
+    | SQL_bool str -> str
+    | And b1 b2 -> (eval_bool b1) ^ " AND " ^ (eval_bool b2)
+    | Exists e -> "EXISTS " ^ eval e
+(** Toplevel statements are of type table *)
+
+TABLES.SAILORS > (** Enters all SAILORS attributes into scope *)
+filter (SAILORS.SID > 10 && exists (TABLES.RESERVES |> filter (SAILORS.sid = RESERVERS.sid))) |> 
+map (project_cols [sname; sid])
+
+
+project_cols [sname]
+config_of_func (fun x -> xx)
+(** Gives SQL *)
+SELECT sname,sid FROM (SELECT * FROM (SELECT * FROM SAILORS) WHERE (SAILORS.SID > 10 AND EXISTS (SELECT * FROM RESERVES WHERE (SAILORS.sid = RESERVERS.sid))))
+(** We need aggregation functions *)
