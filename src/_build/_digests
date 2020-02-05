@@ -1,0 +1,6 @@
+"Resource: /home/arizvi/cypria-query-language/src/interpreter.ml": "\028\132\145\172\016\168\245,o:\250=.f\180G"
+"Rule: ocaml: ml -> cmo & cmi (%=ast )": "y\224n\205I\026\251nU,\194.\198\144#n"
+"Rule: ocaml dependencies ml (%=interpreter )": "w\140\250\161\165]\250\n\014\233\174\237\020\138\179\223"
+"Resource: /home/arizvi/cypria-query-language/src/ast.ml": "J\026\190\249\253\252\246\232\031\129\021\236\179\015\215l"
+"Rule: ocaml dependencies ml (%=ast )": "&7\236c\175\240c\002\219\199\181\160\196q\134\r"
+"Rule: ocaml: ml -> cmo & cmi (%=interpreter )": "\193I\215\023\252vc\184\194\220\230\180\231Y4\027"

@@ -1,0 +1,10 @@
+### Starting build.
+# Target: interpreter.ml.depends, tags: { extension:ml, file:interpreter.ml, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules interpreter.ml > interpreter.ml.depends
+# Target: ast.ml.depends, tags: { extension:ml, file:ast.ml, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules ast.ml > ast.ml.depends
+# Target: ast.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:ast.cmo, file:ast.ml, implem, ocaml, quiet }
+ocamlfind ocamlc -c -o ast.cmo ast.ml
+# Target: interpreter.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:interpreter.cmo, file:interpreter.ml, implem, ocaml, quiet }
+ocamlfind ocamlc -c -o interpreter.cmo interpreter.ml
+# Compilation successful.
