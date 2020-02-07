@@ -4,14 +4,18 @@
 type expression = 
   (** A base-level SQL table. Like [SQLTable "RESERVES"]. *)
   | SQLTable of string
-  | Filter of bool * expression
+  | Filter of cypr_bool * expression
   | Map of map_configuration * expression
-
-and bool =
+and cypr_bool =
   (** SQL Bool is a boolean statement valid in SQL. *)
   | SQLBool of string 
-  | And of bool * bool
-  | Exists of expression 
+  | And of cypr_bool * cypr_bool
+  | HasRows of expression
+  | Contains of tuple_or_expression * string  
 and map_configuration = 
   | ProjectCols of attribute_list 
 and attribute_list = string list
+and tuple_or_expression = 
+  | Tuple of string list 
+  | Expression of expression
+

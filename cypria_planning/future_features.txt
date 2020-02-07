@@ -1,1 +1,2 @@
 * SQL 'IN' Feature in WHERE
+* Support for variables, environment, and let bindings
