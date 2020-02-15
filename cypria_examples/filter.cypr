@@ -1,0 +1,4 @@
+filter (SAILORS.SID = 50 && HasRows (...) ) SAILORS 
+
+
+SELECT * FROM SAILORS WHERE (result eval_bool (And SQL ...))
