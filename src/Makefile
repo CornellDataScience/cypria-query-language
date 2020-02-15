@@ -1,4 +1,4 @@
-UNITS=interpreter reverse_parser
+UNITS=interpreter reverse_parser parser
 MLS_WITHOUT_MLIS=ast
 MLS=$(UNITS:=.ml) $(MLS_WITHOUT_MLIS:=.ml)
 OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo)

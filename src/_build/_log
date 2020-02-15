@@ -9,6 +9,10 @@ ocamlfind ocamlc -c -g -o ast.cmo ast.ml # cached
 ocamlfind ocamldep -modules interpreter.mli > interpreter.mli.depends # cached
 # Target: interpreter.cmi, tags: { byte, compile, debug, extension:mli, file:interpreter.mli, interf, ocaml, quiet }
 ocamlfind ocamlc -c -g -o interpreter.cmi interpreter.mli # cached
+# Target: parser.mli.depends, tags: { debug, extension:mli, file:parser.mli, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules parser.mli > parser.mli.depends # cached
+# Target: parser.cmi, tags: { byte, compile, debug, extension:mli, file:parser.mli, interf, ocaml, quiet }
+ocamlfind ocamlc -c -g -o parser.cmi parser.mli # cached
 # Target: reverse_parser.mli.depends, tags: { debug, extension:mli, file:reverse_parser.mli, ocaml, ocamldep, quiet }
 ocamlfind ocamldep -modules reverse_parser.mli > reverse_parser.mli.depends # cached
 # Target: reverse_parser.cmi, tags: { byte, compile, debug, extension:mli, file:reverse_parser.mli, interf, ocaml, quiet }
@@ -19,10 +23,14 @@ ocamlfind ocamlc -c -g -o test.cmo test.ml # cached
 ocamlfind ocamldep -modules interpreter.ml > interpreter.ml.depends # cached
 # Target: interpreter.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:interpreter.cmo, file:interpreter.ml, implem, ocaml, quiet }
 ocamlfind ocamlc -c -g -o interpreter.cmo interpreter.ml # cached
+# Target: parser.ml.depends, tags: { debug, extension:ml, file:parser.ml, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules parser.ml > parser.ml.depends
 # Target: reverse_parser.ml.depends, tags: { debug, extension:ml, file:reverse_parser.ml, ocaml, ocamldep, quiet }
-ocamlfind ocamldep -modules reverse_parser.ml > reverse_parser.ml.depends
+ocamlfind ocamldep -modules reverse_parser.ml > reverse_parser.ml.depends # cached
 # Target: reverse_parser.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:reverse_parser.cmo, file:reverse_parser.ml, implem, ocaml, quiet }
-ocamlfind ocamlc -c -g -o reverse_parser.cmo reverse_parser.ml
+ocamlfind ocamlc -c -g -o reverse_parser.cmo reverse_parser.ml # cached
+# Target: parser.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:parser.cmo, file:parser.ml, implem, ocaml, quiet }
+ocamlfind ocamlc -c -g -o parser.cmo parser.ml
 # Target: test.byte, tags: { byte, debug, dont_link_with, extension:byte, file:test.byte, link, ocaml, program, quiet }
-ocamlfind ocamlc -linkpkg -g ast.cmo interpreter.cmo reverse_parser.cmo test.cmo -o test.byte
+ocamlfind ocamlc -linkpkg -g ast.cmo interpreter.cmo parser.cmo reverse_parser.cmo test.cmo -o test.byte
 # Compilation successful.
