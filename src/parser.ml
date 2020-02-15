@@ -62,9 +62,9 @@ let next_paren_contained_string str : string * string =
         in (contained_string, rest)
     end
 
-let next_keyword str : string * string = 
-  match String.split_on_char ' ' str with 
-  | [] -> ("", "")
-  | word::[] when word = 
+(* let next_keyword str : string * string = 
+   match String.split_on_char ' ' str with 
+   | [] -> ("", "")
+   | word::[] when word = 
 
-                  let parse_ast_from_string str : expression = SQLTable str
+                  let parse_ast_from_string str : expression = SQLTable str *)

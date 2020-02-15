@@ -9,6 +9,9 @@ let explode s =
     if i < 0 then l else exp (i - 1) (s.[i] :: l) in
   exp (String.length s - 1) []
 
+(** [terminating_paren_index str first_paren_index] is the index of 
+    the correctly matched terminating paren for the initial paren at 
+    index [first_paren_index] *)
 let rec terminating_paren_index str first_paren_index : int option = 
   let rec helper stack curr_index char_list = 
     match char_list with 
@@ -24,11 +27,12 @@ let rec terminating_paren_index str first_paren_index : int option =
     | c::t -> helper stack (curr_index + 1) t in 
   let initial_lst = 
     String.sub str (first_paren_index + 1) 
-      (String.length str - first_paren_index - 1)|>
+      (String.length str - first_paren_index - 1) |>
     explode  in 
   match (helper [] 0 initial_lst) with 
   | None -> None
   | Some n -> Some (n + first_paren_index + 1)
+
 (** [next_paren_contained_string s] 
     is a tuple [(paren_contained_string, rest)] containing the next string 
     enclosed by parenthesies in s and the rest of s, 
@@ -58,4 +62,9 @@ let next_paren_contained_string str : string * string =
         in (contained_string, rest)
     end
 
-let parse_ast_from_string str : expression = SQLTable str
+(* let next_keyword str : string * string = 
+   match String.split_on_char ' ' str with 
+   | [] -> ("", "")
+   | word::[] when word = 
+
+                  let parse_ast_from_string str : expression = SQLTable str *)

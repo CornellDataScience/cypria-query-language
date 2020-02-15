@@ -15,7 +15,7 @@ build:
 	$(OCAMLBUILD) $(OBJECTS)
 
 test:
-	$(OCAMLBUILD) -tag debug $(TEST) && ./$(TEST)
+	$(OCAMLBUILD) -tag 'debug' $(TEST) && ./$(TEST)
 
 repl:
 	$(OCAMLBUILD) $(REPL) && ./$(REPL)
