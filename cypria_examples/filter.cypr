@@ -1,4 +1,11 @@
-filter (SAILORS.SID = 50 && HasRows (...) ) SAILORS 
+filter (SAILORS.SID = 50 && hasRows (...) ) SAILORS 
 
 
 SELECT * FROM SAILORS WHERE (result eval_bool (And SQL ...))
+
+
+(** Cypria: *)
+filter (SAILORS.SID = "%a") SAILORS
+
+(** SQL: *)
+SELECT * FROM SAILORS WHERE SAILORS.SID LIKE "%a" AND SAILORS.SID
