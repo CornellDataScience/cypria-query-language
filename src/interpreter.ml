@@ -26,6 +26,8 @@ and eval_bool bexp : sql_string =
   match bexp with 
   | SQLBool str -> str 
   | And (b1,b2) -> (eval_bool b1) ^ " AND " ^ (eval_bool b2)
+  | Or (b1, b2) -> (eval_bool b1) ^ " OR " ^ (eval_bool b2)
+  | Not b1 -> "NOT " ^ (eval_bool b1)
   | HasRows expr -> "EXISTS (" ^ (eval expr) ^ ")"
   | Contains (collection, attr) -> eval_contains attr collection
 

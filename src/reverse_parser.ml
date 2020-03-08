@@ -14,6 +14,8 @@ let rec string_of_ast expr =
 and string_of_cypr_bool = function 
   | SQLBool s -> s 
   | And (b1,b2) -> (string_of_cypr_bool b1) ^ " && " ^ (string_of_cypr_bool b2)
+  | Or (b1,b2) -> (string_of_cypr_bool b1) ^ " || " ^ (string_of_cypr_bool b2)
+  | Not b1 -> "not " ^ (string_of_cypr_bool b1)
   | HasRows expr -> "has_rows (" ^ (string_of_ast expr) ^ ")"
   | Contains (in_statement, atr) -> 
     "contains (" ^ (string_of_tuple_or_expr in_statement) ^ ") (" ^ atr ^ ")"

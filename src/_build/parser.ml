@@ -11,7 +11,7 @@ let explode s =
 
 (** [terminating_paren_index str first_paren_index] is the index of 
     the correctly matched terminating paren for the initial paren at 
-    index [first_paren_index] *)
+    index [first_paren_index]. *)
 let rec terminating_paren_index str first_paren_index : int option = 
   let rec helper stack curr_index char_list = 
     match char_list with 

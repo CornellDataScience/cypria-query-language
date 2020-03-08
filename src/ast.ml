@@ -10,6 +10,8 @@ and cypr_bool =
   (** SQL Bool is a boolean statement valid in SQL. *)
   | SQLBool of string 
   | And of cypr_bool * cypr_bool
+  | Or of cypr_bool * cypr_bool
+  | Not of cypr_bool
   | HasRows of expression
   | Contains of tuple_or_expression * string  
 and map_configuration = 
