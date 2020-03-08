@@ -6,14 +6,22 @@ type sql_string = string
 let rec eval expr : sql_string =
   begin 
     match expr with
-    | SQLTable str -> "SELECT * FROM (" ^  str ^ ")"
+    | SQLTable str -> "SELECT * FROM (" ^ str ^ ")"
     | Filter (filter_condition, expr) 
       -> "SELECT * FROM (" ^ eval expr ^ ") WHERE (" ^ eval_bool filter_condition ^ ")"
     | Map (map_config, expr) -> eval_map map_config expr
+    | Insert (expr, vals, cols) -> begin
+        match cols with
+        | None ->
+          "INSERT INTO " ^ eval expr ^ "\nVALUES (" ^ string_of_attribute_list vals ^ ")"
+        | Some c -> 
+          "INSERT INTO " ^ eval expr ^ " (" ^ string_of_attribute_list c
+          ^ ")\nVALUES (" ^ string_of_attribute_list vals ^ ")"
+      end
     | Delete (expr, b_opt) ->
-      match b_opt with
-      |None -> "DELETE FROM " ^ (eval expr)
-      |Some c -> "DELETE FROM " ^ (eval expr) ^ " WHERE " (eval_bool c)
+      (match b_opt with
+       |None -> "DELETE FROM " ^ (eval expr)
+       |Some c -> "DELETE FROM " ^ (eval expr) ^ " WHERE " ^ (eval_bool c))
   end 
 
 and eval_map map_config expr = 
