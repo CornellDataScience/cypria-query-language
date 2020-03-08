@@ -99,4 +99,3 @@ config_of_func (fun x -> xx)
 (** Gives SQL *)
 SELECT sname,sid FROM (SELECT * FROM (SELECT * FROM SAILORS) WHERE (SAILORS.SID > 10 AND EXISTS (SELECT * FROM RESERVES WHERE (SAILORS.sid = RESERVERS.sid))))
 (** We need aggregation functions *)
-
