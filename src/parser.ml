@@ -1,13 +1,29 @@
-(** V1 Parser - not doing anything particularly advanced. *)
+(** V1 Parser - not doing anything particularly advanced. 
+    Hardcoded parser. *)
 (** TODO: Rebuild with ocamllex and menhir *)
 
 open Ast 
 
-(** From Ptival - StackOverflow *)
+(** Constants *)
+let keywords = ["filter"; "map"; "has_rows"; "contains"; "project_cols"]
+let infix_keywords = ["&&"]
+
+(** [explode s] is the char list of the characters strung together 
+    to form s. From Ptival - StackOverflow *)
 let explode s =
   let rec exp i l =
     if i < 0 then l else exp (i - 1) (s.[i] :: l) in
   exp (String.length s - 1) []
+
+(** [string_join glue lst] is the string with the elements of lst joined 
+    together with glue between any two elements*)
+let rec string_join glue lst = 
+  let rec join glue lst acc = 
+    match lst with 
+    | [] -> acc
+    | h::t when acc = "" -> join glue t h
+    | h::t -> join glue t (acc ^ glue ^ h) in 
+  join glue lst ""
 
 (** [terminating_paren_index str first_paren_index] is the index of 
     the correctly matched terminating paren for the initial paren at 
@@ -62,9 +78,14 @@ let next_paren_contained_string str : string * string =
         in (contained_string, rest)
     end
 
-let next_keyword str : string * string = 
+let next_prefix_keyword str : string * string = 
   match String.split_on_char ' ' str with 
   | [] -> ("", "")
-  | word::[] when word = 
+  | word::t when List.mem word keywords -> (word, string_join " " t)
+  | word::t -> ("", str)
 
-                  let parse_ast_from_string str : expression = SQLTable str
+
+let parse_ast_from_string str : expression option = 
+  match next_prefix_keyword str with 
+  | ("", str) -> None 
+  | (keyword, rest) -> 
