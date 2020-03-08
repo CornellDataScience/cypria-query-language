@@ -10,6 +10,10 @@ let rec eval expr : sql_string =
     | Filter (filter_condition, expr) 
       -> "SELECT * FROM (" ^ eval expr ^ ") WHERE (" ^ eval_bool filter_condition ^ ")"
     | Map (map_config, expr) -> eval_map map_config expr
+    | Delete (expr, b_opt) ->
+      match b_opt with
+      |None -> "DELETE FROM " ^ (eval expr)
+      |Some c -> "DELETE FROM " ^ (eval expr) ^ " WHERE " (eval_bool c)
   end 
 
 and eval_map map_config expr = 

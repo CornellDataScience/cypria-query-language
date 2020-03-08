@@ -6,6 +6,7 @@ type expression =
   | SQLTable of string
   | Filter of cypr_bool * expression
   | Map of map_configuration * expression
+  | Delete of expression * cypr_bool option
 and cypr_bool =
   (** SQL Bool is a boolean statement valid in SQL. *)
   | SQLBool of string 
