@@ -11,6 +11,16 @@ let rec string_of_ast expr =
     "filter (" ^ (string_of_cypr_bool b) ^ ") (" ^ (string_of_ast expr) ^ ")"
   | Map (mc, expr) ->
     "map (" ^ (string_of_map_config mc) ^ ") (" ^ (string_of_ast expr) ^ ")"
+  | Insert (expr, vals, cols) -> begin
+      match cols with
+      | None -> 
+        "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
+        ^ ")"
+      | Some c -> 
+        "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
+        ^ ") (" ^ string_of_cypr_attr_list c ^ ")"
+    end
+
 and string_of_cypr_bool = function 
   | SQLBool s -> s 
   | And (b1,b2) -> (string_of_cypr_bool b1) ^ " && " ^ (string_of_cypr_bool b2)
@@ -19,7 +29,7 @@ and string_of_cypr_bool = function
   | HasRows expr -> "has_rows (" ^ (string_of_ast expr) ^ ")"
   | Contains (in_statement, atr) -> 
     "contains (" ^ (string_of_tuple_or_expr in_statement) ^ ") (" ^ atr ^ ")"
-  | Like (e1, e2) -> e1 ^ " LIKE " ^ e2
+  | Like (e1, e2) -> e1 ^ "=" ^ e2
 and string_of_map_config = function 
   | ProjectCols lst -> "project_cols (" ^ (string_of_cypr_attr_list lst) ^ ")"
 and string_of_tuple_or_expr = function 
