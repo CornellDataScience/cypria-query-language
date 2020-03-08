@@ -19,6 +19,7 @@ and string_of_cypr_bool = function
   | HasRows expr -> "has_rows (" ^ (string_of_ast expr) ^ ")"
   | Contains (in_statement, atr) -> 
     "contains (" ^ (string_of_tuple_or_expr in_statement) ^ ") (" ^ atr ^ ")"
+  | Like (e1, e2) -> e1 ^ " LIKE " ^ e2
 and string_of_map_config = function 
   | ProjectCols lst -> "project_cols (" ^ (string_of_cypr_attr_list lst) ^ ")"
 and string_of_tuple_or_expr = function 

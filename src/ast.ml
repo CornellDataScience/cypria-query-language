@@ -14,6 +14,7 @@ and cypr_bool =
   | Not of cypr_bool
   | HasRows of expression
   | Contains of tuple_or_expression * string  
+  | Like of string * string
 and map_configuration = 
   | ProjectCols of attribute_list 
 and attribute_list = string list

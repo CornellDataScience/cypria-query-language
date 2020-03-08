@@ -30,6 +30,8 @@ and eval_bool bexp : sql_string =
   | Not b1 -> "NOT " ^ (eval_bool b1)
   | HasRows expr -> "EXISTS (" ^ (eval expr) ^ ")"
   | Contains (collection, attr) -> eval_contains attr collection
+  | Like (e1, e2) -> e1 ^ " LIKE " ^ e2 
+(* e1 = hello, e2 = *a , in cypria: hello = "*a" -> hello LIKE "*a"*)
 
 and eval_contains attr collection =
   match collection with 
