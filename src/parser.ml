@@ -28,17 +28,15 @@ let rec terminating_paren_index str first_paren_index : int option =
   let initial_lst = 
     String.sub str (first_paren_index + 1) 
       (String.length str - first_paren_index - 1) |>
-    explode  in 
+    explode in 
   match (helper [] 0 initial_lst) with 
   | None -> None
   | Some n -> Some (n + first_paren_index + 1)
 
-(** [next_paren_contained_string s] 
-    is a tuple [(paren_contained_string, rest)] containing the next string 
-    enclosed by parenthesies in s and the rest of s, 
-    with no leading or trailing whitespace. 
-
-    Gives ("", s) if s is malformed. *)
+(** [next_paren_contained_string s] is a tuple [(paren_contained_string, rest)] 
+    containing the next string enclosed by parentheses in [s] and the rest of 
+    [s], with no leading or trailing whitespace. 
+    Gives [("", s)] if [s] is malformed. *)
 let next_paren_contained_string str : string * string = 
   let first_paren_index_opt = String.index_opt str '(' in 
   match first_paren_index_opt with 
@@ -68,3 +66,29 @@ let next_paren_contained_string str : string * string =
    | word::[] when word = 
 
                   let parse_ast_from_string str : expression = SQLTable str *)
+
+(** [str_to_lst s] converts a pseudo-list of strings delimited by [,] (commas) 
+    into an OCaml [string list]. 
+    Example: [str_to_lst "hello, my, name, is, david"] 
+    -> [["hello"; "my"; "name"; "is"; "david"]] *)
+let str_to_lst s : string list = 
+  String.split_on_char ',' s |> List.map String.trim
+
+(** [func_param s] is simply the function parameters of the function [fun]
+    that is written as a string literal [s].
+    Example: [func_param "example_func  3 'c' 5 true"] --> "3 'c' 5 true" *)
+let func_param s : string = 
+  let fst_space = String.index s ' ' in
+  String.sub s (fst_space + 1) (String.length s - fst_space - 1) |> String.trim
+
+let parse_map str : map_configuration = 
+  (* Checks for parentheses in the function parameters *)
+  let params = str |> func_param in
+  let str_pair = params |> next_paren_contained_string in
+  let res = 
+    match fst str_pair with
+    | "" -> params (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+  (* accounts for beginning '[' and end ']' *)
+  let str_without_brackets = String.sub res (1) (String.length res - 2) in
+  ProjectCols (str_to_lst str_without_brackets)

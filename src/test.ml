@@ -91,10 +91,26 @@ let eval_tests = [
 
 ]
 
+let make_parser_test_map (name:string) (cypr_str:string) (ast_out:map_configuration) : test = 
+  name >:: (
+    fun _ -> assert_equal
+        ast_out (Parser.parse_map cypr_str) ~printer:(
+        fun pcols -> match pcols with 
+          | ProjectCols(x) -> string_of_attribute_list x
+      )
+  )
+
+let parser_tests = [
+  make_parser_test_map "test parse_map \"project_cols [sid, bid]\"" 
+    "project_cols [sid, bid]" (ProjectCols ["sid"; "bid"]);
+  make_parser_test_map "test parse_map \"project_cols ([sid, bid])\"" 
+    "project_cols ([sid, bid])" (ProjectCols ["sid"; "bid"]);
+]
 
 let tests =
   "test suite"  >::: List.flatten [
     eval_tests;
+    parser_tests;
   ]
 
 let _ = run_test_tt_main tests
