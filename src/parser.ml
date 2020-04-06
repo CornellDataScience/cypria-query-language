@@ -98,12 +98,16 @@ let rec parse_bool str : cypr_bool =
   let and_reg = Str.regexp "&&" in
   let or_reg = Str.regexp "||" in
   let not_reg = Str.regexp "not" in
+  let like_reg = Str.regexp "=" in
   if ((try (Str.search_forward and_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (and_reg) str 2 in
     (And (parse_bool (List.hd lst), parse_bool (List.nth lst 1)))
   else if ((try (Str.search_forward or_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (or_reg) str 2 in
     (Or (parse_bool (List.hd lst), parse_bool (List.nth lst 1)))
+  else if ((try (Str.search_forward like_reg str 0) with Not_found -> -1) >= 0)
+  then let lst = Str.bounded_split (like_reg) str 2 in
+    (Like (String.trim (List.hd lst), String.trim(List.nth lst 1)))
   else if ((try (Str.search_forward not_reg str 0) with Not_found -> -1) >= 0)
   then let b1= Str.string_after str ((Str.search_forward (not_reg) str 0)+3) in
     (Not (parse_bool b1))

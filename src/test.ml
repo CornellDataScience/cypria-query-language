@@ -109,7 +109,7 @@ let rec bool_helper ast =
   | Not x -> "not" ^ bool_helper x
   | HasRows _ -> "a"
   | Contains _ -> "a"
-  | Like _ -> "a"
+  | Like (x,y) -> x ^ " = " ^ y
 
 let make_parser_test_bool (name:string) (cypr_str:string) (ast_out:cypr_bool) : test = 
   name >:: (
@@ -127,7 +127,9 @@ let parser_tests = [
   make_parser_test_bool "test parse_bool and" "A && B" (And (SQLBool "A",SQLBool "B"));
   make_parser_test_bool "test parse_bool or" "A || B" (Or (SQLBool "A", SQLBool "B"));
   make_parser_test_bool "test parse_bool not" "not A " (Not (SQLBool "A"));
-  make_parser_test_bool "test parse_bool" "A && not B" (And (SQLBool "A", Not (SQLBool "B")))
+  make_parser_test_bool "test parse_bool" "A && not B" (And (SQLBool "A", Not (SQLBool "B")));
+  make_parser_test_bool "test parse_bool like " "A = B" (Like ("A", "B"));
+
 ]
 
 let tests =
