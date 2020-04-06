@@ -10,3 +10,5 @@ val next_paren_contained_string : string -> string * string
     Example: [parse_map "project_cols ([sid, bid])"]
     -> [ProjectCols ["sid"; "bid"]] *)
 val parse_map : string -> map_configuration
+
+val parse_bool : string -> cypr_bool

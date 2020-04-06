@@ -2,6 +2,7 @@
 (** TODO: Rebuild with ocamllex and menhir *)
 
 open Ast 
+open Str
 
 (** From Ptival - StackOverflow *)
 let explode s =
@@ -92,3 +93,20 @@ let parse_map str : map_configuration =
   (* accounts for beginning '[' and end ']' *)
   let str_without_brackets = String.sub res (1) (String.length res - 2) in
   ProjectCols (str_to_lst str_without_brackets)
+
+let rec parse_bool str : cypr_bool = 
+  let and_reg = Str.regexp "&&" in
+  let or_reg = Str.regexp "||" in
+  let not_reg = Str.regexp "not" in
+  if ((try (Str.search_forward and_reg str 0) with Not_found -> -1) >= 0)
+  then let lst = Str.bounded_split (and_reg) str 2 in
+    (And (parse_bool (List.hd lst), parse_bool (List.nth lst 1)))
+  else if ((try (Str.search_forward or_reg str 0) with Not_found -> -1) >= 0)
+  then let lst = Str.bounded_split (or_reg) str 2 in
+    (Or (parse_bool (List.hd lst), parse_bool (List.nth lst 1)))
+  else if ((try (Str.search_forward not_reg str 0) with Not_found -> -1) >= 0)
+  then let b1= Str.string_after str ((Str.search_forward (not_reg) str 0)+3) in
+    (Not (parse_bool b1))
+  else SQLBool (String.trim str)
+
+
