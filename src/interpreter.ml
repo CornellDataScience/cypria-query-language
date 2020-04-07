@@ -1,41 +1,49 @@
 open Ast 
+open Variable 
 
 type sql_string = string
 
 (** [eval expr] is the evaluation function for the abstract syntax tree [expr]. *)
-let rec eval expr : sql_string =
+let rec eval expr used_variables : sql_string =
   begin 
     match expr with
-    | SQLTable str -> "SELECT * FROM (" ^  str ^ ")"
-    | Filter (filter_condition, expr) -> failwith "TODO(David): Implement this."
-    | Map (map_config, expr) -> eval_map map_config expr
+    | SQLTable str -> let "SELECT * FROM (" ^  str ^ ")"
+                        | Filter (filter_condition, expr) 
+                          -> "SELECT * FROM (" ^ eval expr used_variables^ ") WHERE (" ^ eval_bool filter_condition used_variables ^ ")"
+                        | Map (map_config, expr) -> eval_map map_config expr used_variables
   end 
-and eval_map map_config expr = 
+
+and eval_map map_config expr used_variables= 
   begin
     match map_config with 
     | ProjectCols lst -> begin 
         match lst with 
-        | [] -> "SELECT * FROM (" ^ (eval expr) ^ ")"
-        | lst -> "SELECT " ^ (string_of_attribute_list lst) ^ " FROM (" ^ (eval expr) ^ ")"
+        | [] -> "SELECT * FROM (" ^ (eval expr used_variables) ^ ")"
+        | lst -> "SELECT " ^ (string_of_attribute_list lst) ^ " FROM (" ^ (eval expr used_variables) ^ ")"
       end
   end 
-and eval_bool bexp : sql_string = 
+
+and eval_bool bexp used_variables: sql_string = 
   match bexp with 
   | SQLBool str -> str 
-  | And (b1,b2) -> (eval_bool b1) ^ " AND " ^ (eval_bool b2)
-  | HasRows expr -> "EXISTS (" ^ (eval expr) ^ ")"
-  | Contains (collection, attr) -> eval_contains attr collection
-and eval_contains attr collection =
+  | And (b1,b2) -> (eval_bool b1 used_variables) ^ " AND " ^ (eval_bool b2 used_variables)
+  | HasRows expr -> "EXISTS (" ^ (eval expr used_variables) ^ ")"
+  | Contains (collection, attr) -> eval_contains attr collection used_variables
+
+and eval_contains attr collection used_variables =
   match collection with 
   | Tuple lst -> attr ^ " IN " ^ string_of_tuple_list lst
-  | Expression exp -> attr ^ " IN (" ^ (eval exp) ^")"
+  | Expression exp -> attr ^ " IN (" ^ (eval exp used_variables) ^")"
+
 and string_of_attribute_list_helper lst acc = 
   match lst with 
   | [] -> acc
   | h::t -> if (acc = "") 
     then string_of_attribute_list_helper t h
     else string_of_attribute_list_helper t h ^ ", " ^ acc
+
 and string_of_attribute_list lst = 
-  string_of_attribute_list_helper lst ""
+  string_of_attribute_list_helper (List.rev lst) ""
+
 and string_of_tuple_list lst = 
   "(" ^ string_of_attribute_list_helper lst "" ^ ")"

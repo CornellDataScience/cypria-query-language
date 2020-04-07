@@ -1,4 +1,4 @@
-UNITS=interpreter reverse_parser parser
+UNITS=interpreter reverse_parser parser variable
 MLS_WITHOUT_MLIS=ast
 MLS=$(UNITS:=.ml) $(MLS_WITHOUT_MLIS:=.ml)
 OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo)
@@ -15,7 +15,7 @@ build:
 	$(OCAMLBUILD) $(OBJECTS)
 
 test:
-	$(OCAMLBUILD) -tag debug $(TEST) && ./$(TEST)
+	$(OCAMLBUILD) -tag 'debug' $(TEST) && ./$(TEST)
 
 repl:
 	$(OCAMLBUILD) $(REPL) && ./$(REPL)

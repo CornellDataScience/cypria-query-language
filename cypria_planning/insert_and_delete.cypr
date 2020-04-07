@@ -1,0 +1,14 @@
+(** Insert Into *)
+(3, "John Doe", 13)::SAILORS
+
+("Jane Doe", 16)::SAILORS -> (SAILORS.SNAME, SAILORS.AGE)
+
+INSERT INTO SAILORS 
+VALUES (3, "John Doe", 13)
+
+INSERT INTO SAILORS (SAILORS.SNAME, SAILORS.AGE)
+VALUES ("Jane Doe", 16)
+
+(** Delete From *)
+delete (SQLBool) SQLTable
+--> DELETE FROM SQLTable WHERE SQLBool
