@@ -1,11 +1,11 @@
 UNITS=interpreter reverse_parser parser variable
 MLS_WITHOUT_MLIS=ast
 MLS=$(UNITS:=.ml) $(MLS_WITHOUT_MLIS:=.ml)
-OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo)
+OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo) 
 MLIS=$(UNITS:=.mli)
 TEST=test.byte
 REPL=repl.byte
-OCAMLBUILD=ocamlbuild -use-ocamlfind
+OCAMLBUILD=ocamlbuild -use-ocamlfind -pkgs oUnit,str
 PKGS=oUnit,str
 
 default: build

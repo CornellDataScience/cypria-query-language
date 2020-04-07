@@ -1,38 +1,44 @@
 ### Starting build.
-# Target: interpreter.mli.depends, tags: { package(oUnit), extension:mli, file:interpreter.mli, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules interpreter.mli > interpreter.mli.depends # cached
-# Target: ast.ml.depends, tags: { package(oUnit), extension:ml, file:ast.ml, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules ast.ml > ast.ml.depends # cached
-# Target: ast.cmo, tags: { package(oUnit), byte, compile, extension:cmo, extension:ml, file:ast.cmo, file:ast.ml, implem, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o ast.cmo ast.ml # cached
-# Target: variable.mli.depends, tags: { package(oUnit), extension:mli, file:variable.mli, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules variable.mli > variable.mli.depends # cached
-# Target: variable.cmi, tags: { package(oUnit), byte, compile, extension:mli, file:variable.mli, interf, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o variable.cmi variable.mli # cached
-# Target: interpreter.cmi, tags: { package(oUnit), byte, compile, extension:mli, file:interpreter.mli, interf, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o interpreter.cmi interpreter.mli # cached
-# Target: interpreter.ml.depends, tags: { package(oUnit), extension:ml, file:interpreter.ml, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules interpreter.ml > interpreter.ml.depends # cached
-# Target: interpreter.cmo, tags: { package(oUnit), byte, compile, extension:cmo, extension:ml, file:interpreter.cmo, file:interpreter.ml, implem, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o interpreter.cmo interpreter.ml # cached
-# Target: reverse_parser.mli.depends, tags: { package(oUnit), extension:mli, file:reverse_parser.mli, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules reverse_parser.mli > reverse_parser.mli.depends # cached
-# Target: reverse_parser.cmi, tags: { package(oUnit), byte, compile, extension:mli, file:reverse_parser.mli, interf, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o reverse_parser.cmi reverse_parser.mli # cached
-# Target: reverse_parser.ml.depends, tags: { package(oUnit), extension:ml, file:reverse_parser.ml, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules reverse_parser.ml > reverse_parser.ml.depends # cached
-# Target: reverse_parser.cmo, tags: { package(oUnit), byte, compile, extension:cmo, extension:ml, file:reverse_parser.cmo, file:reverse_parser.ml, implem, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o reverse_parser.cmo reverse_parser.ml # cached
-# Target: parser.mli.depends, tags: { package(oUnit), extension:mli, file:parser.mli, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules parser.mli > parser.mli.depends # cached
-# Target: parser.cmi, tags: { package(oUnit), byte, compile, extension:mli, file:parser.mli, interf, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o parser.cmi parser.mli # cached
-# Target: parser.ml.depends, tags: { package(oUnit), extension:ml, file:parser.ml, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules parser.ml > parser.ml.depends
-# Target: parser.cmo, tags: { package(oUnit), byte, compile, extension:cmo, extension:ml, file:parser.cmo, file:parser.ml, implem, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o parser.cmo parser.ml
-# Target: variable.ml.depends, tags: { package(oUnit), extension:ml, file:variable.ml, ocaml, ocamldep, quiet, traverse }
-ocamlfind ocamldep -package oUnit -modules variable.ml > variable.ml.depends
-# Target: variable.cmo, tags: { package(oUnit), byte, compile, extension:cmo, extension:ml, file:variable.cmo, file:variable.ml, implem, ocaml, quiet, traverse }
-ocamlfind ocamlc -c -package oUnit -o variable.cmo variable.ml
+# Target: test.ml.depends, tags: { package(oUnit), package(str), debug, extension:ml, file:test.ml, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules test.ml > test.ml.depends # cached
+# Target: ast.ml.depends, tags: { package(oUnit), package(str), debug, extension:ml, file:ast.ml, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules ast.ml > ast.ml.depends # cached
+# Target: ast.cmo, tags: { package(oUnit), package(str), byte, compile, debug, extension:cmo, extension:ml, file:ast.cmo, file:ast.ml, implem, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o ast.cmo ast.ml # cached
+# Target: interpreter.mli.depends, tags: { package(oUnit), package(str), debug, extension:mli, file:interpreter.mli, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules interpreter.mli > interpreter.mli.depends # cached
+# Target: variable.mli.depends, tags: { package(oUnit), package(str), debug, extension:mli, file:variable.mli, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules variable.mli > variable.mli.depends # cached
+# Target: variable.cmi, tags: { package(oUnit), package(str), byte, compile, debug, extension:mli, file:variable.mli, interf, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o variable.cmi variable.mli # cached
+# Target: interpreter.cmi, tags: { package(oUnit), package(str), byte, compile, debug, extension:mli, file:interpreter.mli, interf, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o interpreter.cmi interpreter.mli # cached
+# Target: parser.mli.depends, tags: { package(oUnit), package(str), debug, extension:mli, file:parser.mli, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules parser.mli > parser.mli.depends
+# Target: reverse_parser.mli.depends, tags: { package(oUnit), package(str), debug, extension:mli, file:reverse_parser.mli, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules reverse_parser.mli > reverse_parser.mli.depends # cached
+# Target: reverse_parser.cmi, tags: { package(oUnit), package(str), byte, compile, debug, extension:mli, file:reverse_parser.mli, interf, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o reverse_parser.cmi reverse_parser.mli # cached
+# Target: parser.cmi, tags: { package(oUnit), package(str), byte, compile, debug, extension:mli, file:parser.mli, interf, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o parser.cmi parser.mli
+# Target: test.cmo, tags: { package(oUnit), package(str), byte, compile, debug, extension:cmo, extension:ml, file:test.cmo, file:test.ml, implem, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o test.cmo test.ml
+# Target: interpreter.ml.depends, tags: { package(oUnit), package(str), debug, extension:ml, file:interpreter.ml, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules interpreter.ml > interpreter.ml.depends # cached
+# Target: interpreter.cmo, tags: { package(oUnit), package(str), byte, compile, debug, extension:cmo, extension:ml, file:interpreter.cmo, file:interpreter.ml, implem, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o interpreter.cmo interpreter.ml # cached
+# Target: parser.ml.depends, tags: { package(oUnit), package(str), debug, extension:ml, file:parser.ml, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules parser.ml > parser.ml.depends # cached
+# Target: reverse_parser.ml.depends, tags: { package(oUnit), package(str), debug, extension:ml, file:reverse_parser.ml, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules reverse_parser.ml > reverse_parser.ml.depends # cached
+# Target: variable.ml.depends, tags: { package(oUnit), package(str), debug, extension:ml, file:variable.ml, ocaml, ocamldep, quiet, traverse }
+ocamlfind ocamldep -package oUnit -package str -modules variable.ml > variable.ml.depends # cached
+# Target: parser.cmo, tags: { package(oUnit), package(str), byte, compile, debug, extension:cmo, extension:ml, file:parser.cmo, file:parser.ml, implem, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o parser.cmo parser.ml
+# Target: reverse_parser.cmo, tags: { package(oUnit), package(str), byte, compile, debug, extension:cmo, extension:ml, file:reverse_parser.cmo, file:reverse_parser.ml, implem, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o reverse_parser.cmo reverse_parser.ml
+# Target: variable.cmo, tags: { package(oUnit), package(str), byte, compile, debug, extension:cmo, extension:ml, file:variable.cmo, file:variable.ml, implem, ocaml, quiet, traverse }
+ocamlfind ocamlc -c -g -package oUnit -package str -o variable.cmo variable.ml
+# Target: test.byte, tags: { package(oUnit), package(str), byte, debug, dont_link_with, extension:byte, file:test.byte, link, ocaml, program, quiet, traverse }
+ocamlfind ocamlc -linkpkg -g -package oUnit -package str ast.cmo variable.cmo interpreter.cmo parser.cmo reverse_parser.cmo test.cmo -o test.byte
 # Compilation successful.

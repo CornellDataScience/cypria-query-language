@@ -4,6 +4,7 @@ open Reverse_parser
 open Parser
 open OUnit2
 open Variable
+open Str
 
 (* let b = And(
     And(
@@ -92,10 +93,50 @@ let eval_tests = [
 
 ]
 
+let make_parser_test_map (name:string) (cypr_str:string) (ast_out:map_configuration) : test = 
+  name >:: (
+    fun _ -> assert_equal
+        ast_out (Parser.parse_map cypr_str) ~printer:(
+        fun pcols -> match pcols with 
+          | ProjectCols(x) -> string_of_attribute_list x
+      )
+  )
+
+let rec bool_helper ast =
+  match ast with
+  |SQLBool s -> "SQLBool" ^ s
+  | And (x,y)-> (bool_helper x) ^ " && " ^ (bool_helper y)
+  | Or (x,y) -> (bool_helper x) ^ " || " ^ (bool_helper y)
+  | Not x -> "not" ^ bool_helper x
+  | HasRows _ -> "a"
+  | Contains _ -> "a"
+  | Like (x,y) -> x ^ " = " ^ y
+
+let make_parser_test_bool (name:string) (cypr_str:string) (ast_out:cypr_bool) : test = 
+  name >:: (
+    fun _ -> assert_equal
+        ast_out (Parser.parse_bool cypr_str) ~printer:(
+        bool_helper
+      )
+  )
+
+let parser_tests = [
+  make_parser_test_map "test parse_map \"project_cols [sid, bid]\"" 
+    "project_cols [sid, bid]" (ProjectCols ["sid"; "bid"]);
+  make_parser_test_map "test parse_map \"project_cols ([sid, bid])\"" 
+    "project_cols ([sid, bid])" (ProjectCols ["sid"; "bid"]);
+  make_parser_test_bool "test parse_bool and" "A && B" (And (SQLBool "A",SQLBool "B"));
+  make_parser_test_bool "test parse_bool or" "A || B" (Or (SQLBool "A", SQLBool "B"));
+  make_parser_test_bool "test parse_bool not" "not A " (Not (SQLBool "A"));
+  make_parser_test_bool "test parse_bool" "A && not B" (And (SQLBool "A", Not (SQLBool "B")));
+  make_parser_test_bool "test parse_bool like " "A = B" (Like ("A", "B"));
+
+]
 
 let tests =
   "test suite"  >::: List.flatten [
     eval_tests;
+    parser_tests;
   ]
 
 let _ = run_test_tt_main tests
