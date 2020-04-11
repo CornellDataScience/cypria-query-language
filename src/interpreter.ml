@@ -22,12 +22,12 @@ let rec eval expr used_variables : sql_string =
       end
     | Delete (expr, b_opt) ->
       (match b_opt with
-       |None -> "DELETE FROM " ^ (eval expr used_variables)
-       |Some c -> "DELETE FROM " ^ (eval expr used_variables) ^ " WHERE " 
-                  ^ (eval_bool c used_variables))
+       | None -> "DELETE FROM " ^ (eval expr used_variables)
+       | Some c -> "DELETE FROM " ^ (eval expr used_variables) ^ " WHERE " 
+                   ^ (eval_bool c used_variables))
   end 
 
-and eval_map map_config expr used_variables= 
+and eval_map map_config expr used_variables = 
   begin
     match map_config with 
     | ProjectCols lst -> begin 

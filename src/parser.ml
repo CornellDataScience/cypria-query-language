@@ -114,8 +114,39 @@ let parse_map str : map_configuration =
     | "" -> params (* No parentheses in the parameters *)
     | valid_str -> valid_str in
   (* accounts for beginning '[' and end ']' *)
-  let str_without_brackets = String.sub res (1) (String.length res - 2) in
+  let str_without_brackets = String.sub res 1 (String.length res - 2) in
   ProjectCols (str_to_lst str_without_brackets)
+
+(** [trim_parens str] removes all the outer parentheses from [str].
+    Caution: If used on a tuple, it will get rid of the parentheses there too.
+    Make sure that's the desired behavior. *)
+let rec trim_parens str =
+  let len = String.length str in
+  if len <= 1 then str
+  else if String.sub str 0 1 = "(" && String.sub str (len - 1) 1 = ")" 
+  then String.sub str 1 (len - 2) |> trim_parens 
+  else str
+
+(** [remove_quotes str] removes outer quote characters from [str]. *)
+let remove_quotes str =
+  let len = String.length str in
+  if len <= 1 then str
+  else if String.sub str 0 1 = "\"" && String.sub str (len - 1) 1 = "\"" 
+       || String.sub str 0 1 = "'" && String.sub str (len - 1) 1 = "'"
+  then String.sub str 1 (len - 2) 
+  else str
+
+let parse_tuple_or_expr str : tuple_or_expression option = 
+  let trimmed_str = str |> String.trim in
+  if String.sub trimmed_str 0 1 = "(" && 
+     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ")" then 
+    let str_without_paren = trim_parens trimmed_str in 
+    let lst_of_tup_elts = 
+      str_without_paren |> str_to_lst |> List.map remove_quotes in
+    Some (Tuple lst_of_tup_elts)
+  else match parse_ast_from_string str with
+    | None -> None
+    | Some expr -> Some (Expression expr)
 
 let rec parse_bool str : cypr_bool = 
   let and_reg = Str.regexp "&&" in
