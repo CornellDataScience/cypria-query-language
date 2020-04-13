@@ -1,0 +1,96 @@
+@charset "utf-8";
+/**-----------------------------------------------------------
+ * name: main.css
+ * purpose: baseline css framework used for the whole website
+ * author: david kim
+ * last revised: april 13th, 2020
+ * Licensed by Cornell Data Science. 
+ * https://cornelldata.science
+ -----------------------------------------------------------*/
+
+/* Just in case browser does not support HTML5 */
+
+* {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-decoration: none;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* Because I don't like purple links :P */
+
+* a {
+  color: blue;
+}
+
+html {
+  font-family: -apple-system, sans-serif;
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Font set is same as the dashboard app Momentum */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Neue Haas Grotesk Text Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  color: #1a1a1a;
+  line-height: 1.8;
+}
+
+article, aside, footer, header, nav, section {
+  display: block;
+}
+
+h1, h2, h3 {
+  font-weight: inherit;
+}
+
+/* main style, inclusive of everything(!!) on every page. */
+
+.main-container {
+  background-color: #f2f2f2;
+  /* 80px offset for the header on top. */
+  height: calc(100vh - 80px);
+  overflow-x: hidden;
+}
+
+footer {
+  grid-area: footer;
+  height: 100%;
+  font-size: 16px;
+  text-align: right;
+  font-weight: 200;
+}
+
+.license {
+  height: 100%;
+}
+
+/* General styles */
+
+.cornell {
+  /* The official Cornell color! */
+  color: #b31b1b;
+}
+
+.bold {
+  font-weight: 500;
+}
+
+.ital {
+  font-style: italic;
+}
+
+.xx {
+  text-decoration: line-through;
+}
+
+/* noscript message is center-aligned */
+
+#noscript {
+  text-align: center;
+}

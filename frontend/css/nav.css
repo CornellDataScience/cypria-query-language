@@ -1,0 +1,73 @@
+@charset "utf-8";
+/**-----------------------------------------------------------
+ * name: nav.css
+ * purpose: css styles for the navigation bar
+ * author: david kim
+ * last revised: april 13th, 2020
+ * Licensed by Cornell Data Science. 
+ * https://cornelldata.science
+ -----------------------------------------------------------*/
+
+nav {
+  height: 80px;
+  width: 100%;
+  background-color: #001a39;
+  letter-spacing: 0.1em;
+  display: grid;
+  grid-template-columns: 300px auto;
+}
+
+/* Needed to make sure links don't purple out */
+
+nav a {
+  color: inherit;
+}
+
+/* Logo on the top left corner */
+
+#logo {
+  grid-column: 1 / span 1;
+  justify-self: start;
+  align-self: center;
+  cursor: pointer;
+  height: 80px;
+  line-height: 80px;
+  margin-left: 40px;
+}
+
+#logo h1 {
+  color: #fff;
+  font-size: 24px;
+}
+
+/* The items at the top right corner */
+
+#nav-items {
+  grid-column: 2 / span 1;
+  justify-self: end;
+  align-self: center;
+  cursor: pointer;
+  height: 80px;
+  line-height: 80px;
+  margin-right: 40px;
+  /* Each item is part of the subgrid */
+  display: grid;
+  grid-template-columns: 80px 80px 80px;
+  column-gap: 10px;
+}
+
+.item {
+  justify-self: center;
+  align-self: center;
+  height: 100%;
+}
+
+.item h1 {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 200;
+}
+
+/* Screens smaller than 800px */
+
+@media only screen and (max-width: 800px) {}
