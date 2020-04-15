@@ -117,23 +117,47 @@ let parse_map str : map_configuration =
   let str_without_brackets = String.sub res (1) (String.length res - 2) in
   ProjectCols (str_to_lst str_without_brackets)
 
+(*needs to remove parentheses from word *)
+let paren_helper str =
+  str
+
+(* RETURN OPTION NOT CYPR_BOOL*)
 let rec parse_bool str : cypr_bool = 
+  let s1,s2 = next_paren_contained_string (str) in
   let and_reg = Str.regexp "&&" in
   let or_reg = Str.regexp "||" in
   let not_reg = Str.regexp "not" in
   let like_reg = Str.regexp "=" in
-  if ((try (Str.search_forward and_reg str 0) with Not_found -> -1) >= 0)
-  then let lst = Str.bounded_split (and_reg) str 2 in
-    (And (parse_bool (List.hd lst), parse_bool (List.nth lst 1)))
+  let has_rows_reg = Str.regexp "has_rows" in
+  let contains_reg = Str.regexp "contains" in
+  (*if ((try (Str.search_forward contains_reg str 0) with Not_found -> -1) >= 0)
+    then let s = Str.string_after str ((Str.search_forward (contains_reg) str 0)+8) in
+    let (s1,str) = next_paren_contained_string(s) in 
+    let (s2,_) = next_paren_contained_string (str) in
+    Contains ((match (parse_ast_from_string s1) with
+        |None -> failwith "malformed"
+        |Some s -> s)
+             , s2)
+    else*) if ((try (Str.search_forward has_rows_reg str 0) with Not_found -> -1) >= 0)
+  then let s = Str.string_after str ((Str.search_forward (has_rows_reg) str 0)+8) in
+    let str_pair = next_paren_contained_string(s) in 
+    HasRows (match (parse_ast_from_string (fst str_pair)) with
+        |None -> failwith "malformed"
+        |Some s -> s)
   else if ((try (Str.search_forward or_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (or_reg) str 2 in
-    (Or (parse_bool (List.hd lst), parse_bool (List.nth lst 1)))
+    (Or ((List.hd lst) |> paren_helper |> parse_bool, (List.nth lst 1) |> paren_helper |>parse_bool ))
+  else if ((try (Str.search_forward and_reg str 0) with Not_found -> -1) >= 0)
+  then let lst = Str.bounded_split (and_reg) str 2 in
+    (And ((List.hd lst) |> paren_helper |> parse_bool, (List.nth lst 1) |> paren_helper |>parse_bool))
   else if ((try (Str.search_forward like_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (like_reg) str 2 in
     (Like (String.trim (List.hd lst), String.trim(List.nth lst 1)))
   else if ((try (Str.search_forward not_reg str 0) with Not_found -> -1) >= 0)
   then let b1= Str.string_after str ((Str.search_forward (not_reg) str 0)+3) in
-    (Not (parse_bool b1))
+    (Not (parse_bool (paren_helper b1)))
   else SQLBool (String.trim str)
+
+
 
 

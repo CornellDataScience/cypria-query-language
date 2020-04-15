@@ -130,7 +130,9 @@ let parser_tests = [
   make_parser_test_bool "test parse_bool not" "not A " (Not (SQLBool "A"));
   make_parser_test_bool "test parse_bool" "A && not B" (And (SQLBool "A", Not (SQLBool "B")));
   make_parser_test_bool "test parse_bool like " "A = B" (Like ("A", "B"));
-
+  make_parser_test_bool "test parse_bool not" "not (A) " (Not (SQLBool "A"));
+  (*make_parser_test_bool "test parse_bool paren" "(A || B) && (C || D)" (Not (And (SQLBool "A",SQLBool "B")));*)
+  make_parser_test_bool "test parse_bool paren" "(A || B)" (Or (SQLBool "A", SQLBool "B"))
 ]
 
 let tests =
