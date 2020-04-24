@@ -149,8 +149,11 @@ let parse_tuple_or_expr str : tuple_or_expression option =
     | None -> None
     | Some expr -> Some (Expression expr)
 
+(**[suffix_char s c] appends a character to a string*)
 let suffix_char s c = s ^ String.make 1 c
 
+(* [get_paren_str str idx acc num] returns the first substring in str that is in 
+   parentheses.*)
 let rec get_paren_str str idx acc num=
   let c = String.get str idx in
   if(c = ')')
@@ -158,15 +161,7 @@ let rec get_paren_str str idx acc num=
   else if( c = '(') then get_paren_str str (idx+1) (suffix_char acc c) (num+1)
   else  get_paren_str str (idx+1) (suffix_char acc c) num
 
-(*SET UP A WHITESPACE NORMALIZER*)
-(*FIRST: look for open paren. If there is, then find string from open to close
-  paren. Evaluate that into ast. IF there is a not on it, not it.  
-  To the right of that will be AND or OR or NOTHING If nothing, end. if AND or OR
-  evaluate the left side and then and it. do this recursively.*)
-(* RETURN OPTION NOT CYPR_BOOL*)
-(*let rec parse_bool str : cypr_bool = 
-  let lst = String.split_on_char ' ' str in
-  create_lst lst*)
+(* [parse_bool str] parses string [str] into a cypr_bool*)
 let rec parse_bool str : cypr_bool =
   let and_reg = Str.regexp "&&" in
   let or_reg = Str.regexp "||" in
@@ -188,11 +183,6 @@ let rec parse_bool str : cypr_bool =
           |None -> failwith "malformed"
           |Some s -> s)
                , s2)
-      (*let lst = Str.bounded_split (Str.regexp ",") str 2 in
-        Contains ((match (parse_tuple_or_expr (List.hd lst)) with
-            |None -> failwith "malformed"
-            |Some s -> s)
-                 , List.nth lst 1)*)
     else if ((try (Str.search_forward has_rows_reg str contains_offset) with e -> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-9)
     then 
       HasRows (match (parse_ast_from_string (sub)) with
@@ -259,20 +249,4 @@ let rec parse_bool str : cypr_bool =
   then let b1= Str.string_after str ((Str.search_forward (not_reg) str 0)+3) in
     (Not (parse_bool (b1)))
   else SQLBool (String.trim str)
-(*let stack = Stack.create()
-  let rec add_stack stack lst = 
-  match lst with
-  | ")" :: t -> (stack,t)
-  | h :: t -> add_stack (stack @ [h]) t
-  | [] -> stack,[]
-
-  let rec create_lst stack lst ast =
-  match lst with
-  | "(" :: t -> let stk,l = add_stack stack t in (create_lst stk l (parse_bool stk))
-  | [] -> parse_bool stack
-  | h :: t -> create_lst (stack @ [h]) t ast*)
-
-
-let sub_string s =
-  String.sub "(A||B)&&(C||D)" ((try (Str.search_forward (Str.regexp "A||B") s 0) with Not_found -> -1)+(String.length "A||B")+2) (String.length s)
 

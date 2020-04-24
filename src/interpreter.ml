@@ -25,6 +25,12 @@ let rec eval expr used_variables : sql_string =
        | None -> "DELETE FROM " ^ (eval expr used_variables)
        | Some c -> "DELETE FROM " ^ (eval expr used_variables) ^ " WHERE " 
                    ^ (eval_bool c used_variables))
+    | Filter_Min (attr_lst, attr, expr) 
+      -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", min(" ^ attr 
+         ^ ") as " ^ attr ^ "FROM (" ^ (eval expr used_variables) ^ ")"
+    | Filter_Max (attr_lst, attr, expr) 
+      -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", max(" ^ attr 
+         ^ ") as " ^ attr ^ "FROM (" ^ (eval expr used_variables) ^ ")"
   end 
 
 and eval_map map_config expr used_variables = 

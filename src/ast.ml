@@ -8,6 +8,8 @@ type expression =
   | Map of map_configuration * expression
   | Insert of expression * attribute_list * attribute_list option
   | Delete of expression * cypr_bool option
+  | Filter_Min of attribute_list * string * expression
+  | Filter_Max of attribute_list * string * expression
 and cypr_bool =
   (** SQL Bool is a boolean statement valid in SQL. *)
   | SQLBool of string 

@@ -21,10 +21,15 @@ let rec string_of_ast expr =
         ^ ") (" ^ string_of_cypr_attr_list c ^ ")"
     end
   | Delete (expr, bools) ->
-    match bools with 
-    | None -> "delete (" ^ (string_of_ast expr) ^ ")"
-    | Some b -> "delete (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_bool b) ^ ")"
-
+    (match bools with 
+     | None -> "delete (" ^ (string_of_ast expr) ^ ")"
+     | Some b -> "delete (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_bool b) ^ ")")
+  | Filter_Min (lst, attr, expr) ->
+    "filter_min (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
+    (string_of_ast expr)^ ")"
+  | Filter_Max (lst, attr, expr) ->
+    "filter_max (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
+    (string_of_ast expr)^ ")"
 and string_of_cypr_bool = function 
   | SQLBool s -> s 
   | And (b1,b2) -> (string_of_cypr_bool b1) ^ " && " ^ (string_of_cypr_bool b2)
