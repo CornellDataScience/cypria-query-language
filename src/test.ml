@@ -55,34 +55,44 @@ let eval_tests = [
     "SELECT * FROM (SELECT * FROM (SAILORS)) WHERE (SAILORS.SID > 3)";
   make_eval_test_expr "test Map" expr_map 
     "SELECT SAILORS.SID, SAILORS.NAME FROM (SELECT * FROM (SAILORS))";
-  make_eval_test_expr "test Map2"  (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS"))
+  make_eval_test_expr "test Map2"  
+    (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS"))
     "SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS))";
   make_eval_test_expr "test Map3"  (Map (ProjectCols [ ""], SQLTable ""))
     "SELECT  FROM (SELECT * FROM ())";
   make_eval_test_bool "test bool"  (SQLBool "true") "true";
   make_eval_test_bool "test bool"  (SQLBool "") "";
-  make_eval_test_bool "test And"  (And ((SQLBool "true"), (SQLBool "true"))) "true AND true";
-  make_eval_test_bool "test And1"  (And ((HasRows (SQLTable "SAILORS")), 
-                                         (SQLBool "true"))) 
+  make_eval_test_bool "test And"  
+    (And ((SQLBool "true"), (SQLBool "true"))) "true AND true";
+  make_eval_test_bool "test And1"  
+    (And ((HasRows (SQLTable "SAILORS")), (SQLBool "true"))) 
     "EXISTS (SELECT * FROM (SAILORS)) AND true";
-  make_eval_test_bool "test And2"  (And (HasRows (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS")), 
-                                         (SQLBool "true"))) 
+  make_eval_test_bool "test And2"  
+    (And (HasRows (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS")), (SQLBool "true"))) 
     "EXISTS (SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS))) AND true";
   make_eval_test_bool "test HasRows"  (HasRows (SQLTable "SAILORS")) 
     "EXISTS (SELECT * FROM (SAILORS))";
-  make_eval_test_bool "test HasRows2"  (HasRows (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS")))
+  make_eval_test_bool "test HasRows2"  
+    (HasRows (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS")))
     "EXISTS (SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS)))";
-  make_eval_test_bool "test HasRows3"  (HasRows (Filter (SQLBool "SAILORS.SID > 3", SQLTable "SAILORS")))
+  make_eval_test_bool "test HasRows3"  
+    (HasRows (Filter (SQLBool "SAILORS.SID > 3", SQLTable "SAILORS")))
     "EXISTS (SELECT * FROM (SELECT * FROM (SAILORS)) WHERE (SAILORS.SID > 3))";
-  make_eval_test_bool "test Contains Tuple"  (Contains (Tuple ["SAILOR"], "HELP")) "HELP IN (SAILOR)";
-  make_eval_test_bool "test Contains Tuple"  (Contains (Tuple [""], "")) " IN ()";
-  make_eval_test_bool "test Contains Expr"  (Contains ((Expression (SQLTable "SAILOR")), "HELP")) 
+  make_eval_test_bool "test Contains Tuple"  
+    (Contains (Tuple ["SAILOR"], "HELP")) "HELP IN (SAILOR)";
+  make_eval_test_bool "test Contains Tuple"  
+    (Contains (Tuple [""], "")) " IN ()";
+  make_eval_test_bool "test Contains Expr"  
+    (Contains ((Expression (SQLTable "SAILOR")), "HELP")) 
     "HELP IN (SELECT * FROM (SAILOR))";
-  make_eval_test_bool "test Contains Expr"  (Contains ((Expression (SQLTable "SAILOR")), "HELP")) 
+  make_eval_test_bool "test Contains Expr"  
+    (Contains ((Expression (SQLTable "SAILOR")), "HELP")) 
     "HELP IN (SELECT * FROM (SAILOR))";
-  make_eval_test_bool "test Contains Expr2"  (Contains ((Expression (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS"))), "HELP")) 
+  make_eval_test_bool "test Contains Expr2"  
+    (Contains ((Expression (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS"))), "HELP")) 
     "HELP IN (SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS)))";
-  make_eval_test_bool "test Contains Expr3"  (Contains ((Expression (Filter (SQLBool "SAILORS.SID > 3", SQLTable "SAILORS"))), "HELP")) 
+  make_eval_test_bool "test Contains Expr3"  
+    (Contains ((Expression (Filter (SQLBool "SAILORS.SID > 3", SQLTable "SAILORS"))), "HELP")) 
     "HELP IN (SELECT * FROM (SELECT * FROM (SAILORS)) WHERE (SAILORS.SID > 3))";
   make_eval_test_string_attribute "test list" ["Sailor"; "Janitor"; "Friend"] "Sailor, Janitor, Friend";
   make_eval_test_string_attribute "test list one" ["Sailor"] "Sailor";
@@ -102,15 +112,27 @@ let make_parser_test_map (name:string) (cypr_str:string) (ast_out:map_configurat
       )
   )
 
+let make_parser_test_tup_or_expr (name:string) (cypr_str:string) 
+    (ast_out:tuple_or_expression option) : test = 
+  name >:: (
+    fun _ -> assert_equal
+        ast_out (Parser.parse_tuple_or_expr cypr_str) ~printer:(
+        fun tup_or_expr -> match tup_or_expr with 
+          | None -> "Not valid"
+          | Some (Expression(expr)) -> "Expression (not implemented yet)"
+          | Some (Tuple(tup)) -> string_of_attribute_list tup
+      )
+  )
+
 let rec bool_helper ast =
   match ast with
-  |SQLBool s -> "SQLBool" ^ s
-  | And (x,y)-> (bool_helper x) ^ " && " ^ (bool_helper y)
-  | Or (x,y) -> (bool_helper x) ^ " || " ^ (bool_helper y)
+  | SQLBool s -> s
+  | And (x,y)-> "And ("^(bool_helper x)^")("^(bool_helper y)^")"
+  | Or (x,y) -> "Or ("^(bool_helper x)^")("^(bool_helper y)^")"
   | Not x -> "not" ^ bool_helper x
   | HasRows _ -> "a"
   | Contains _ -> "a"
-  | Like (x,y) -> x ^ " = " ^ y
+  | Like (x,y) ->"Like ("^x^")("^y^")"
 
 let make_parser_test_bool (name:string) (cypr_str:string) (ast_out:cypr_bool) : test = 
   name >:: (
@@ -121,18 +143,32 @@ let make_parser_test_bool (name:string) (cypr_str:string) (ast_out:cypr_bool) : 
   )
 
 let parser_tests = [
-  make_parser_test_map "test parse_map \"project_cols [sid, bid]\"" 
+  (*make_parser_test_map "test parse_map \"project_cols [sid, bid]\"" 
     "project_cols [sid, bid]" (ProjectCols ["sid"; "bid"]);
-  make_parser_test_map "test parse_map \"project_cols ([sid, bid])\"" 
+    make_parser_test_map "test parse_map \"project_cols ([sid, bid])\"" 
     "project_cols ([sid, bid])" (ProjectCols ["sid"; "bid"]);
-  make_parser_test_bool "test parse_bool and" "A && B" (And (SQLBool "A",SQLBool "B"));
-  make_parser_test_bool "test parse_bool or" "A || B" (Or (SQLBool "A", SQLBool "B"));
-  make_parser_test_bool "test parse_bool not" "not A " (Not (SQLBool "A"));
-  make_parser_test_bool "test parse_bool" "A && not B" (And (SQLBool "A", Not (SQLBool "B")));
-  make_parser_test_bool "test parse_bool like " "A = B" (Like ("A", "B"));
-  make_parser_test_bool "test parse_bool not" "not (A) " (Not (SQLBool "A"));
-  (*make_parser_test_bool "test parse_bool paren" "(A || B) && (C || D)" (Not (And (SQLBool "A",SQLBool "B")));*)
-  make_parser_test_bool "test parse_bool paren" "(A || B)" (Or (SQLBool "A", SQLBool "B"))
+    make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
+    "(\"Example\", \"Tuple\")" (Some (Tuple ["Example"; "Tuple"]));
+    make_parser_test_tup_or_expr "test it on tuple with extra parens" 
+    "((('Example', 'Tuple')))" (Some (Tuple ["Example"; "Tuple"]));
+    make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
+    "Not a tuple" (None);
+    make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));*)
+  (*make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)&&(E||F)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));*)
+  make_parser_test_bool "test parse_bool paren2" "((B&&F)||A)&&(C||D)" (And (Or(And (SQLBool "B", SQLBool "F"),SQLBool "A"),(Or(SQLBool "C",SQLBool "D"))));
+  make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
+  make_parser_test_bool "test parse_bool paren" "not A" (Not (SQLBool "A"));
+  make_parser_test_bool "test parse_bool paren" "(A||B)&&(C=D)" (And (Or(SQLBool "A",SQLBool "B"),(Like( "C","D"))));
+  make_parser_test_bool "test parse_bool paren" "(notA||B)&&(C||D)" (And (Or(Not (SQLBool "A"),SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
+  make_parser_test_bool "test parse_bool paren!!!!" "has_rows(A)" (HasRows(SQLTable "A"));
+  (*make_parser_test_bool "test parse_bool and" "A && B" (And (SQLBool "A",SQLBool "B"));
+    make_parser_test_bool "test parse_bool or" "A || B" (Or (SQLBool "A", SQLBool "B"));
+    make_parser_test_bool "test parse_bool not" "not A " (Not (SQLBool "A"));
+    make_parser_test_bool "test parse_bool" "A && not B" (And (SQLBool "A", Not (SQLBool "B")));
+    make_parser_test_bool "test parse_bool like " "A = B" (Like ("A", "B"));
+    make_parser_test_bool "test parse_bool not" "not (A) " (Not (SQLBool "A"));
+    (*make_parser_test_bool "test parse_bool paren" "(A || B) && (C || D)" (Not (And (SQLBool "A",SQLBool "B")));*)
+    make_parser_test_bool "test parse_bool paren" "(A || B)" (Or (SQLBool "A", SQLBool "B"))*)
 ]
 
 let tests =

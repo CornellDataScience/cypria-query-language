@@ -114,31 +114,133 @@ let parse_map str : map_configuration =
     | "" -> params (* No parentheses in the parameters *)
     | valid_str -> valid_str in
   (* accounts for beginning '[' and end ']' *)
-  let str_without_brackets = String.sub res (1) (String.length res - 2) in
+  let str_without_brackets = String.sub res 1 (String.length res - 2) in
   ProjectCols (str_to_lst str_without_brackets)
 
-(*needs to remove parentheses from word *)
-let paren_helper str =
-  str
 
+(** [trim_parens str] removes all the outer parentheses from [str].
+    Caution: If used on a tuple, it will get rid of the parentheses there too.
+    Make sure that's the desired behavior. *)
+let rec trim_parens str =
+  let len = String.length str in
+  if len <= 1 then str
+  else if String.sub str 0 1 = "(" && String.sub str (len - 1) 1 = ")" 
+  then String.sub str 1 (len - 2) |> trim_parens 
+  else str
+
+(** [remove_quotes str] removes outer quote characters from [str]. *)
+let remove_quotes str =
+  let len = String.length str in
+  if len <= 1 then str
+  else if String.sub str 0 1 = "\"" && String.sub str (len - 1) 1 = "\"" 
+       || String.sub str 0 1 = "'" && String.sub str (len - 1) 1 = "'"
+  then String.sub str 1 (len - 2) 
+  else str
+
+let parse_tuple_or_expr str : tuple_or_expression option = 
+  let trimmed_str = str |> String.trim in
+  if String.sub trimmed_str 0 1 = "(" && 
+     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ")" then 
+    let str_without_paren = trim_parens trimmed_str in 
+    let lst_of_tup_elts = 
+      str_without_paren |> str_to_lst |> List.map remove_quotes in
+    Some (Tuple lst_of_tup_elts)
+  else match parse_ast_from_string str with
+    | None -> None
+    | Some expr -> Some (Expression expr)
+
+let suffix_char s c = s ^ String.make 1 c
+
+let rec get_paren_str str idx acc num=
+  let c = String.get str idx in
+  if(c = ')')
+  then (if (num == 0) then acc else get_paren_str str (idx+1) (suffix_char acc c) (num-1))
+  else if( c = '(') then get_paren_str str (idx+1) (suffix_char acc c) (num+1)
+  else  get_paren_str str (idx+1) (suffix_char acc c) num
+
+(*SET UP A WHITESPACE NORMALIZER*)
+(*FIRST: look for open paren. If there is, then find string from open to close
+  paren. Evaluate that into ast. IF there is a not on it, not it.  
+  To the right of that will be AND or OR or NOTHING If nothing, end. if AND or OR
+  evaluate the left side and then and it. do this recursively.*)
 (* RETURN OPTION NOT CYPR_BOOL*)
-let rec parse_bool str : cypr_bool = 
-  let s1,s2 = next_paren_contained_string (str) in
+(*let rec parse_bool str : cypr_bool = 
+  let lst = String.split_on_char ' ' str in
+  create_lst lst*)
+let rec parse_bool str : cypr_bool =
   let and_reg = Str.regexp "&&" in
   let or_reg = Str.regexp "||" in
   let not_reg = Str.regexp "not" in
   let like_reg = Str.regexp "=" in
   let has_rows_reg = Str.regexp "has_rows" in
   let contains_reg = Str.regexp "contains" in
-  (*if ((try (Str.search_forward contains_reg str 0) with Not_found -> -1) >= 0)
-    then let s = Str.string_after str ((Str.search_forward (contains_reg) str 0)+8) in
+  if(String.contains str '(')
+  then let sub = get_paren_str str ((String.index str '(')+1) "" 0 in
+    let bool = parse_bool sub in
+    let contains_offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-9 in
+    let not_offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-4 in
+    if ((try (Str.search_forward contains_reg str contains_offset) with e-> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-9)
+    then 
+      let s = Str.string_after str ((Str.search_forward (contains_reg) str contains_offset)+8) in
+      let (s1,str) = next_paren_contained_string(s) in 
+      let (s2,_) = next_paren_contained_string (str) in
+      Contains ((match (parse_tuple_or_expr s1) with
+          |None -> failwith "malformed"
+          |Some s -> s)
+               , s2)
+      (*let lst = Str.bounded_split (Str.regexp ",") str 2 in
+        Contains ((match (parse_tuple_or_expr (List.hd lst)) with
+            |None -> failwith "malformed"
+            |Some s -> s)
+                 , List.nth lst 1)*)
+    else if ((try (Str.search_forward has_rows_reg str contains_offset) with e -> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-9)
+    then 
+      HasRows (match (parse_ast_from_string (sub)) with
+          |None -> failwith "malformed"
+          |Some s -> s)
+    else if ((try (Str.search_forward not_reg str not_offset) with e-> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-4)
+    then (Not (bool))
+    else 
+      let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3 in
+      let offset2 = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 in
+      let offset3 = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-5 in
+      let or_idx1 = (try (Str.search_forward or_reg str offset) with e -> 1000000) in
+      let or_idx2 = (try (Str.search_forward or_reg str offset2) with e-> 1000000) in
+      let and_idx1 = (try (Str.search_forward and_reg str offset) with e -> 100000) in
+      let and_idx2 = (try (Str.search_forward and_reg str offset2) with e -> 100000) in
+      let like_idx = (try (Str.search_forward like_reg str offset3) with e -> 100000) in
+      let like_idx2 = (try (Str.search_forward like_reg str offset2) with e -> 100000) in
+      if (or_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)
+      then
+        (Or (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)|> parse_bool, bool))
+      else if (or_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1)
+      then
+        let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+3 in
+        (Or (bool ,String.sub str (offset) ((String.length str)-offset) |> parse_bool))
+      else if (and_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)
+      then
+        (And (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)|> parse_bool, bool))
+      else if (and_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1)
+      then
+        let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+3 in
+        (And (bool ,String.sub str (offset) ((String.length str)-offset) |> parse_bool))
+      else if (like_idx == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2)
+      then 
+        (Like (String.trim (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2)), String.trim (sub)))
+      else if (like_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub) +1)
+      then let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 in
+        (Like (String.trim (sub), String.trim (String.sub str 0 (offset))))
+      else bool
+  else
+  if ((try (Str.search_forward contains_reg str 0) with Not_found -> -1) >= 0)
+  then let s = Str.string_after str ((Str.search_forward (contains_reg) str 0)+8) in
     let (s1,str) = next_paren_contained_string(s) in 
     let (s2,_) = next_paren_contained_string (str) in
-    Contains ((match (parse_ast_from_string s1) with
+    Contains ((match (parse_tuple_or_expr s1) with
         |None -> failwith "malformed"
         |Some s -> s)
              , s2)
-    else*) if ((try (Str.search_forward has_rows_reg str 0) with Not_found -> -1) >= 0)
+  else if ((try (Str.search_forward has_rows_reg str 0) with Not_found -> -1) >= 0)
   then let s = Str.string_after str ((Str.search_forward (has_rows_reg) str 0)+8) in
     let str_pair = next_paren_contained_string(s) in 
     HasRows (match (parse_ast_from_string (fst str_pair)) with
@@ -146,18 +248,31 @@ let rec parse_bool str : cypr_bool =
         |Some s -> s)
   else if ((try (Str.search_forward or_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (or_reg) str 2 in
-    (Or ((List.hd lst) |> paren_helper |> parse_bool, (List.nth lst 1) |> paren_helper |>parse_bool ))
+    (Or ((List.hd lst) |> parse_bool, (List.nth lst 1)  |>parse_bool ))
   else if ((try (Str.search_forward and_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (and_reg) str 2 in
-    (And ((List.hd lst) |> paren_helper |> parse_bool, (List.nth lst 1) |> paren_helper |>parse_bool))
+    (And ((List.hd lst)  |> parse_bool, (List.nth lst 1) |>parse_bool))
   else if ((try (Str.search_forward like_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (like_reg) str 2 in
     (Like (String.trim (List.hd lst), String.trim(List.nth lst 1)))
   else if ((try (Str.search_forward not_reg str 0) with Not_found -> -1) >= 0)
   then let b1= Str.string_after str ((Str.search_forward (not_reg) str 0)+3) in
-    (Not (parse_bool (paren_helper b1)))
+    (Not (parse_bool (b1)))
   else SQLBool (String.trim str)
+(*let stack = Stack.create()
+  let rec add_stack stack lst = 
+  match lst with
+  | ")" :: t -> (stack,t)
+  | h :: t -> add_stack (stack @ [h]) t
+  | [] -> stack,[]
+
+  let rec create_lst stack lst ast =
+  match lst with
+  | "(" :: t -> let stk,l = add_stack stack t in (create_lst stk l (parse_bool stk))
+  | [] -> parse_bool stack
+  | h :: t -> create_lst (stack @ [h]) t ast*)
 
 
-
+let sub_string s =
+  String.sub "(A||B)&&(C||D)" ((try (Str.search_forward (Str.regexp "A||B") s 0) with Not_found -> -1)+(String.length "A||B")+2) (String.length s)
 

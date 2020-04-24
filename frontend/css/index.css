@@ -1,0 +1,22 @@
+@charset "utf-8";
+/**-----------------------------------------------------------
+ * name: index.css
+ * purpose: styles for the main page
+ * author: david kim
+ * last revised: april 13th, 2020
+ * Licensed by Cornell Data Science. 
+ * https://cornelldata.science
+ -----------------------------------------------------------*/
+
+/* main style, inclusive of everything(!!) on the page. Uses grid. */
+
+.main-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 32px;
+  grid-template-areas: "main" "footer";
+}
+
+/* Screens smaller than 800px */
+
+@media only screen and (max-width: 800px) {}
