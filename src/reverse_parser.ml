@@ -11,7 +11,7 @@ let rec string_of_ast expr =
     "filter (" ^ (string_of_cypr_bool b) ^ ") (" ^ (string_of_ast expr) ^ ")"
   | Map (mc, expr) ->
     "map (" ^ (string_of_map_config mc) ^ ") (" ^ (string_of_ast expr) ^ ")"
-  | Insert (expr, vals, cols) -> begin
+  | Insert (vals, cols, expr) -> begin
       match cols with
       | None -> 
         "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
@@ -20,7 +20,7 @@ let rec string_of_ast expr =
         "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
         ^ ") (" ^ string_of_cypr_attr_list c ^ ")"
     end
-  | Delete (expr, bools) ->
+  | Delete (bools, expr) ->
     (match bools with 
      | None -> "delete (" ^ (string_of_ast expr) ^ ")"
      | Some b -> "delete (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_bool b) ^ ")")
@@ -30,6 +30,9 @@ let rec string_of_ast expr =
   | Filter_Max (lst, attr, expr) ->
     "filter_max (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
     (string_of_ast expr)^ ")"
+  | CountInst (col, expr) -> 
+    "count (" ^ (string_of_attribute_list col) ^ ") (" ^ string_of_ast expr ^ ")"
+
 and string_of_cypr_bool = function 
   | SQLBool s -> s 
   | And (b1,b2) -> (string_of_cypr_bool b1) ^ " && " ^ (string_of_cypr_bool b2)

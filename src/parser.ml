@@ -85,7 +85,6 @@ let next_prefix_keyword str : string * string =
   | word::t when List.mem word keywords -> (word, string_join " " t)
   | word::t -> ("", str)
 
-
 let parse_ast_from_string str : expression option = 
   match next_prefix_keyword str with 
   | ("", str) -> None 
@@ -116,7 +115,6 @@ let parse_map str : map_configuration =
   (* accounts for beginning '[' and end ']' *)
   let str_without_brackets = String.sub res 1 (String.length res - 2) in
   ProjectCols (str_to_lst str_without_brackets)
-
 
 (** [trim_parens str] removes all the outer parentheses from [str].
     Caution: If used on a tuple, it will get rid of the parentheses there too.
