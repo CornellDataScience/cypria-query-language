@@ -143,17 +143,17 @@ let make_parser_test_bool (name:string) (cypr_str:string) (ast_out:cypr_bool) : 
   )
 
 let parser_tests = [
-  (*make_parser_test_map "test parse_map \"project_cols [sid, bid]\"" 
+  make_parser_test_map "test parse_map \"project_cols [sid, bid]\"" 
     "project_cols [sid, bid]" (ProjectCols ["sid"; "bid"]);
-    make_parser_test_map "test parse_map \"project_cols ([sid, bid])\"" 
+  make_parser_test_map "test parse_map \"project_cols ([sid, bid])\"" 
     "project_cols ([sid, bid])" (ProjectCols ["sid"; "bid"]);
-    make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
+  make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
     "(\"Example\", \"Tuple\")" (Some (Tuple ["Example"; "Tuple"]));
-    make_parser_test_tup_or_expr "test it on tuple with extra parens" 
+  make_parser_test_tup_or_expr "test it on tuple with extra parens" 
     "((('Example', 'Tuple')))" (Some (Tuple ["Example"; "Tuple"]));
-    make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
+  make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
     "Not a tuple" (None);
-    make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));*)
+  make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
   (*make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)&&(E||F)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));*)
   make_parser_test_bool "test parse_bool paren2" "((B&&F)||A)&&(C||D)" (And (Or(And (SQLBool "B", SQLBool "F"),SQLBool "A"),(Or(SQLBool "C",SQLBool "D"))));
   make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
