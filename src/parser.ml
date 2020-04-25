@@ -8,7 +8,7 @@ open Str
 exception ParseError of string
 
 (** Constants *)
-let keywords = ["filter"; "map"; "has_rows"; "contains"; "project_cols"]
+let keywords = ["filter"; "map"; "has_rows"; "contains"; "project_cols"; "insert"; "delete"]
 let infix_keywords = ["&&"]
 
 (** [explode s] is the char list of the characters strung together 
@@ -85,12 +85,6 @@ let next_prefix_keyword str : string * string =
   | word::t when List.mem word keywords -> (word, string_join " " t)
   | word::t -> ("", str)
 
-
-let parse_ast_from_string str : expression option = 
-  match next_prefix_keyword str with 
-  | ("", str) -> None 
-  | (keyword, rest) -> failwith "unimplemented"
-
 (** [str_to_lst s] converts a pseudo-list of strings delimited by [,] (commas) 
     into an OCaml [string list]. 
     Example: [str_to_lst "hello, my, name, is, david"] 
@@ -104,18 +98,6 @@ let str_to_lst s : string list =
 let func_param s : string = 
   let fst_space = String.index s ' ' in
   String.sub s (fst_space + 1) (String.length s - fst_space - 1) |> String.trim
-
-let parse_map str : map_configuration = 
-  (* Checks for parentheses in the function parameters *)
-  let params = str |> func_param in
-  let str_pair = params |> next_paren_contained_string in
-  let res = 
-    match fst str_pair with
-    | "" -> params (* No parentheses in the parameters *)
-    | valid_str -> valid_str in
-  (* accounts for beginning '[' and end ']' *)
-  let str_without_brackets = String.sub res 1 (String.length res - 2) in
-  ProjectCols (str_to_lst str_without_brackets)
 
 (** [trim_parens str] removes all the outer parentheses from [str].
     Caution: If used on a tuple, it will get rid of the parentheses there too.
@@ -136,7 +118,66 @@ let remove_quotes str =
   then String.sub str 1 (len - 2) 
   else str
 
-let parse_tuple_or_expr str : tuple_or_expression option = 
+let rec parse_ast_from_string str : expression option = 
+  match next_prefix_keyword str with 
+  | ("", str) -> Some (SQLTable str) 
+  | (keyword, rest) when keyword = "filter" -> parse_filter str
+  | (keyword, rest) when keyword = "map" -> parse_map str
+  | (keyword, rest) when keyword = "insert" -> failwith "unimplemented"
+  | (keyword, rest) when keyword = "delete" -> failwith "unimplemented"
+  | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
+
+and parse_filter str : expression option = 
+  match next_prefix_keyword str with 
+  | (keyword, rest) when keyword = "filter" -> 
+    begin 
+      match next_paren_contained_string rest with 
+      | (bool_str, rest) -> 
+        if bool_str = "" 
+        then raise (ParseError ("Malformed filter: " ^ str))
+        else 
+          let cypr_bool = parse_bool bool_str in 
+          let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
+                                                |> fun (str, rest) -> str) in 
+          match sub_expr with 
+          | Some sub_expr ->
+            Some (Filter (cypr_bool, sub_expr))
+          | None -> None
+    end
+  | _ -> raise (ParseError "Expected token: filter")
+
+and parse_map str : expression option = 
+  match next_prefix_keyword str with  
+  | (keyword, rest) when keyword = "map" -> 
+    begin 
+      match next_paren_contained_string rest with
+      | (map_config_str, rest) -> 
+        if map_config_str = "" 
+        then raise (ParseError ("Malformed map: " ^ str))
+        else 
+          let map_config = parse_map_configuration map_config_str in 
+          let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
+                                                |> fun (str, rest) -> str) in
+          match sub_expr with 
+          | Some sub_expr ->
+            Some (Map (map_config, sub_expr))
+          | None -> None
+    end
+  | _ -> raise (ParseError "Expected token: map")
+
+and parse_map_configuration str : map_configuration = 
+  (* Checks for parentheses in the function parameters *)
+  let params = str |> func_param in
+  let str_pair = params |> next_paren_contained_string in
+  let res = 
+    match fst str_pair with
+    | "" -> params (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+  (* accounts for beginning '[' and end ']' *)
+  let str_without_brackets = String.sub res 1 (String.length res - 2) in
+  ProjectCols (str_to_lst str_without_brackets)
+
+and parse_tuple_or_expr str : tuple_or_expression option = 
   let trimmed_str = str |> String.trim in
   if String.sub trimmed_str 0 1 = "(" && 
      String.sub trimmed_str (String.length trimmed_str - 1) 1 = ")" then 
@@ -148,7 +189,7 @@ let parse_tuple_or_expr str : tuple_or_expression option =
     | None -> None
     | Some expr -> Some (Expression expr)
 
-let rec parse_bool str : cypr_bool = 
+and parse_bool str : cypr_bool = 
   let and_reg = Str.regexp "&&" in
   let or_reg = Str.regexp "||" in
   let not_reg = Str.regexp "not" in
