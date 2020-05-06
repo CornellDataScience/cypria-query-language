@@ -52,6 +52,7 @@
         <h1>Try Cypria</h1>
         <div id="code-box">
           <textarea>
+(* Try writing some code here! *)
 let tbl = "products" in
 tbl |> filter_max ["name";"price"] "price"&#13;&#10;</textarea>
         </div>
