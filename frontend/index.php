@@ -37,6 +37,7 @@
 
   <!-- Content -->
   <div class="main-container">
+    <div></div>
     <div class="main">
       <div class="intro section">
         <div id="intro-description">

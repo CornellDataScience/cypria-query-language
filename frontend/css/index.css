@@ -12,8 +12,8 @@
 .main-container {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: auto 32px;
-  grid-template-areas: "main" "footer";
+  grid-template-rows: 4% 92% 4%;
+  grid-template-areas: "." "main" "footer";
 }
 
 .main {
@@ -25,7 +25,6 @@
   margin-right: auto;
   width: 65rem;
   height: 100%;
-  margin-top: 30px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 5fr 4fr;
@@ -169,12 +168,10 @@
 }
 
 .links a {
-  display: block;
   font-size: 20px;
   font-weight: 500;
   margin-left: 10px;
-  margin-top: 10px;
-  height: 25px;
+  line-height: 170%;
 }
 
 .other {
