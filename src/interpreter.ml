@@ -14,7 +14,7 @@ let rec eval expr env : sql_string =
       -> "SELECT * FROM (" ^ eval expr env ^ ") WHERE (" 
          ^ eval_bool filter_condition env ^ ")"
     | Map (map_config, expr) -> eval_map map_config expr env
-    | Insert (expr, vals, cols) -> begin
+    | Insert (vals, cols, expr) -> begin
         match cols with
         | None ->
           "INSERT INTO " ^ eval expr env ^ "\nVALUES (" ^ string_of_attribute_list vals ^ ")"
@@ -22,7 +22,7 @@ let rec eval expr env : sql_string =
           "INSERT INTO " ^ eval expr env ^ " (" ^ string_of_attribute_list c
           ^ ")\nVALUES (" ^ string_of_attribute_list vals ^ ")"
       end
-    | Delete (expr, b_opt) ->
+    | Delete (b_opt, expr) ->
       (match b_opt with
        | None -> "DELETE FROM " ^ (eval expr env)
        | Some c -> "DELETE FROM " ^ (eval expr env) ^ " WHERE " 
@@ -38,6 +38,10 @@ let rec eval expr env : sql_string =
       let sql_string_1 = eval e1 env in 
       let env' = update_env x sql_string_1 env in 
       eval e2 env'
+    | CountInst (col, expr) ->
+      "SELECT (" ^ (string_of_attribute_list col) 
+      ^ ", COUNT(*)) AS count\nFROM (" ^ eval expr env ^ ")" 
+      ^ " GROUP BY (" ^ (string_of_attribute_list col) ^ ")"
   end 
 
 and eval_map map_config expr used_variables = 
@@ -64,7 +68,7 @@ and eval_bool bexp used_variables: sql_string =
 and eval_contains attr collection used_variables =
   match collection with 
   | Tuple lst -> attr ^ " IN " ^ string_of_tuple_list lst
-  | Expression exp -> attr ^ " IN (" ^ (eval exp used_variables) ^")"
+  | Expression exp -> attr ^ " IN (" ^ (eval exp used_variables) ^ ")"
 
 and string_of_attribute_list_helper lst acc = 
   match lst with 

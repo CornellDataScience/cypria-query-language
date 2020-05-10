@@ -8,12 +8,13 @@ type expression =
   | SQLTable of string
   | Filter of cypr_bool * expression
   | Map of map_configuration * expression
-  | Insert of expression * attribute_list * attribute_list option
-  | Delete of expression * cypr_bool option
+  | Insert of attribute_list * attribute_list option * expression
+  | Delete of cypr_bool option * expression
   | Filter_Min of attribute_list * string * expression
   | Filter_Max of attribute_list * string * expression
   | Let of id * expression * expression
   | Var of id 
+  | CountInst of attribute_list * expression
 and cypr_bool =
   (** SQL Bool is a boolean statement valid in SQL. *)
   | SQLBool of string 

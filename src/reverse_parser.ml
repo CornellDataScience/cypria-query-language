@@ -6,12 +6,12 @@ let rec string_of_cypr_attr_list lst =
 
 let rec string_of_ast expr = 
   match expr with 
-  | SQLTable str -> str^":SQLSTRING" 
+  | SQLTable str -> str
   | Filter (b, expr) -> 
     "filter (" ^ (string_of_cypr_bool b) ^ ") (" ^ (string_of_ast expr) ^ ")"
   | Map (mc, expr) ->
     "map (" ^ (string_of_map_config mc) ^ ") (" ^ (string_of_ast expr) ^ ")"
-  | Insert (expr, vals, cols) -> begin
+  | Insert (vals, cols, expr) -> begin
       match cols with
       | None -> 
         "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
@@ -20,7 +20,7 @@ let rec string_of_ast expr =
         "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
         ^ ") (" ^ string_of_cypr_attr_list c ^ ")"
     end
-  | Delete (expr, bools) ->
+  | Delete (bools, expr) ->
     (match bools with 
      | None -> "delete (" ^ (string_of_ast expr) ^ ")"
      | Some b -> "delete (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_bool b) ^ ")")
@@ -32,6 +32,8 @@ let rec string_of_ast expr =
     (string_of_ast expr)^ ")"
   | Var x -> x 
   | Let (x, e1, e2) -> "let " ^ "x = " ^ (string_of_ast e1) ^ " in " ^ (string_of_ast e2)
+  | CountInst (col, expr) -> 
+    "count (" ^ (string_of_attribute_list col) ^ ") (" ^ string_of_ast expr ^ ")"
 
 and string_of_cypr_bool = function 
   | SQLBool s -> s 

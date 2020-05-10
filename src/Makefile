@@ -32,7 +32,7 @@ finalcheck: check
 	bash finalcheck.sh
 
 zip:
-	zip a9src.zip *.ml* _tags Makefile
+	zip cypria.zip *.ml* _tags Makefile
 
 docs: docs-public docs-private
 
@@ -49,4 +49,4 @@ docs-private: build
 
 clean:
 	ocamlbuild -clean
-	rm -rf doc.public doc.private a9src.zip
+	rm -rf doc.public doc.private cypria.zip

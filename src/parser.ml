@@ -194,8 +194,8 @@ let rec parse_ast_from_string str : expression option =
   | ("", str) -> if is_capitalized str then Some (SQLTable str) else Some (Var str)
   | (keyword, rest) when keyword = "filter" -> parse_filter str
   | (keyword, rest) when keyword = "map" -> parse_map str
-  | (keyword, rest) when keyword = "insert" -> failwith "unimplemented"
-  | (keyword, rest) when keyword = "delete" -> failwith "unimplemented"
+  | (keyword, rest) when keyword = "insert" -> raise (ParseError "unimplemented")
+  | (keyword, rest) when keyword = "delete" -> raise (ParseError "unimplemented")
   | (keyword, rest) when keyword = "let" -> parse_let str 
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
 
@@ -313,13 +313,13 @@ and parse_bool str : cypr_bool =
       let (s1,str) = next_paren_contained_string(s) in 
       let (s2,_) = next_paren_contained_string (str) in
       Contains ((match (parse_tuple_or_expr s1) with
-          |None -> failwith "malformed"
+          |None -> raise (ParseError "malformed")
           |Some s -> s)
                , s2)
     else if ((try (Str.search_forward has_rows_reg str contains_offset) with e -> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-9)
     then 
       HasRows (match (parse_ast_from_string (sub)) with
-          |None -> failwith "malformed"
+          |None -> raise (ParseError "malformed")
           |Some s -> s)
     else if ((try (Str.search_forward not_reg str not_offset) with e-> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-4)
     then (Not (bool))
@@ -360,14 +360,14 @@ and parse_bool str : cypr_bool =
     let (s1,str) = next_paren_contained_string(s) in 
     let (s2,_) = next_paren_contained_string (str) in
     Contains ((match (parse_tuple_or_expr s1) with
-        |None -> failwith "malformed"
+        |None -> raise (ParseError "malformed")
         |Some s -> s)
              , s2)
   else if ((try (Str.search_forward has_rows_reg str 0) with Not_found -> -1) >= 0)
   then let s = Str.string_after str ((Str.search_forward (has_rows_reg) str 0)+8) in
     let str_pair = next_paren_contained_string(s) in 
     HasRows (match (parse_ast_from_string (fst str_pair)) with
-        |None -> failwith "malformed"
+        |None -> raise (ParseError "malformed")
         |Some s -> s)
   else if ((try (Str.search_forward or_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (or_reg) str 2 in

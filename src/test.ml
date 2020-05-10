@@ -30,6 +30,7 @@ let make_eval_test_expr (name:string) (expr:expression) (sql_out:sql_string) : t
     fun _ -> assert_equal
         sql_out (eval expr Variable.empty_env) ~printer:(fun x -> x)
   )
+
 let make_eval_test_bool (name:string) (bexpr:cypr_bool) (sql_out:sql_string) : test = 
   name >:: (
     fun _ -> assert_equal
@@ -56,26 +57,30 @@ let eval_tests = [
   make_eval_test_expr "test Map" expr_map 
     "SELECT SAILORS.SID, SAILORS.NAME FROM (SELECT * FROM (SAILORS))";
   make_eval_test_expr "test Map2"  
-    (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS"))
+    (Map (ProjectCols ["SAILORS.NAME"], SQLTable "SAILORS"))
     "SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS))";
-  make_eval_test_expr "test Map3"  (Map (ProjectCols [ ""], SQLTable ""))
+  make_eval_test_expr "test Map3" (Map (ProjectCols [""], SQLTable ""))
     "SELECT  FROM (SELECT * FROM ())";
   make_eval_test_expr "test let"  (Let ("x", (Map (ProjectCols [ ""], SQLTable "")), (Var "x")))
     "SELECT  FROM (SELECT * FROM ())";
   make_eval_test_bool "test bool"  (SQLBool "true") "true";
   make_eval_test_bool "test bool"  (SQLBool "") "";
+  make_eval_test_expr "test CountInst" (CountInst (["sid"], SQLTable "SAILORS")) 
+    "SELECT (sid, COUNT(*)) AS count\nFROM (SELECT * FROM (SAILORS)) GROUP BY (sid)";
+  make_eval_test_bool "test bool" (SQLBool "true") "true";
+  make_eval_test_bool "test bool" (SQLBool "") "";
   make_eval_test_bool "test And"  
     (And ((SQLBool "true"), (SQLBool "true"))) "true AND true";
   make_eval_test_bool "test And1"  
     (And ((HasRows (SQLTable "SAILORS")), (SQLBool "true"))) 
     "EXISTS (SELECT * FROM (SAILORS)) AND true";
   make_eval_test_bool "test And2"  
-    (And (HasRows (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS")), (SQLBool "true"))) 
+    (And (HasRows (Map (ProjectCols ["SAILORS.NAME"], SQLTable "SAILORS")), (SQLBool "true"))) 
     "EXISTS (SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS))) AND true";
-  make_eval_test_bool "test HasRows"  (HasRows (SQLTable "SAILORS")) 
+  make_eval_test_bool "test HasRows" (HasRows (SQLTable "SAILORS")) 
     "EXISTS (SELECT * FROM (SAILORS))";
   make_eval_test_bool "test HasRows2"  
-    (HasRows (Map (ProjectCols [ "SAILORS.NAME"], SQLTable "SAILORS")))
+    (HasRows (Map (ProjectCols ["SAILORS.NAME"], SQLTable "SAILORS")))
     "EXISTS (SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS)))";
   make_eval_test_bool "test HasRows3"  
     (HasRows (Filter (SQLBool "SAILORS.SID > 3", SQLTable "SAILORS")))
