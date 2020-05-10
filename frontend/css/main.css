@@ -22,8 +22,12 @@
 
 /* Because I don't like purple links :P */
 
-* a {
+a {
   color: #007d9c;
+}
+
+a:hover {
+  color: #4fc7ff;
 }
 
 html {
