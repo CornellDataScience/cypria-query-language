@@ -8,7 +8,7 @@ let execute_program_on_stdout str : unit=
     Printf.printf "Standard of given program: %s\n" 
       (Reverse_parser.string_of_ast exp);
     Printf.printf "SQL of given program: %s \n"
-      (Interpreter.eval exp Variable.empty_list);
+      (Interpreter.eval exp Variable.empty_env);
   | None -> Printf.printf "Failure.\n"
 
 let _ = execute_program_on_stdout 
@@ -16,3 +16,6 @@ let _ = execute_program_on_stdout
 
 let _ = execute_program_on_stdout 
     "map (project_cols [sid]) (Sailors)"
+
+let _ = execute_program_on_stdout 
+    "let x = filter (Sailors.sid > 5 && Sailors.sname = \"Haram\") (Sailors) in map (project_cols [sid]) (x)"

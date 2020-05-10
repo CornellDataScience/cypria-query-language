@@ -3,28 +3,41 @@ open Variable
 
 type sql_string = string
 
+exception UnboundVariable of string 
+
 (** [eval expr] is the evaluation function for the abstract syntax tree [expr]. *)
-let rec eval expr used_variables : sql_string =
+let rec eval expr env : sql_string =
   begin 
     match expr with
     | SQLTable str -> "SELECT * FROM (" ^ str ^ ")"
     | Filter (filter_condition, expr) 
-      -> "SELECT * FROM (" ^ eval expr used_variables ^ ") WHERE (" 
-         ^ eval_bool filter_condition used_variables ^ ")"
-    | Map (map_config, expr) -> eval_map map_config expr used_variables
+      -> "SELECT * FROM (" ^ eval expr env ^ ") WHERE (" 
+         ^ eval_bool filter_condition env ^ ")"
+    | Map (map_config, expr) -> eval_map map_config expr env
     | Insert (expr, vals, cols) -> begin
         match cols with
         | None ->
-          "INSERT INTO " ^ eval expr used_variables ^ "\nVALUES (" ^ string_of_attribute_list vals ^ ")"
+          "INSERT INTO " ^ eval expr env ^ "\nVALUES (" ^ string_of_attribute_list vals ^ ")"
         | Some c -> 
-          "INSERT INTO " ^ eval expr used_variables ^ " (" ^ string_of_attribute_list c
+          "INSERT INTO " ^ eval expr env ^ " (" ^ string_of_attribute_list c
           ^ ")\nVALUES (" ^ string_of_attribute_list vals ^ ")"
       end
     | Delete (expr, b_opt) ->
       (match b_opt with
-       | None -> "DELETE FROM " ^ (eval expr used_variables)
-       | Some c -> "DELETE FROM " ^ (eval expr used_variables) ^ " WHERE " 
-                   ^ (eval_bool c used_variables))
+       | None -> "DELETE FROM " ^ (eval expr env)
+       | Some c -> "DELETE FROM " ^ (eval expr env) ^ " WHERE " 
+                   ^ (eval_bool c env))
+    | Filter_Min (attr_lst, attr, expr) 
+      -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", min(" ^ attr 
+         ^ ") as " ^ attr ^ "FROM (" ^ (eval expr env) ^ ")"
+    | Filter_Max (attr_lst, attr, expr) 
+      -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", max(" ^ attr 
+         ^ ") as " ^ attr ^ "FROM (" ^ (eval expr env) ^ ")"
+    | Var s -> eval_var s env
+    | Let (x, e1, e2) -> 
+      let sql_string_1 = eval e1 env in 
+      let env' = update_env x sql_string_1 env in 
+      eval e2 env'
   end 
 
 and eval_map map_config expr used_variables = 
@@ -65,3 +78,8 @@ and string_of_attribute_list lst =
 
 and string_of_tuple_list lst = 
   "(" ^ string_of_attribute_list_helper lst "" ^ ")"
+
+and eval_var s env = 
+  match Variable.find_env_opt s env with 
+  | Some sql_string -> sql_string
+  | None -> raise (UnboundVariable ("Error: " ^ s ^ " is unbound"))
