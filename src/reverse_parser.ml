@@ -6,7 +6,7 @@ let rec string_of_cypr_attr_list lst =
 
 let rec string_of_ast expr = 
   match expr with 
-  | SQLTable str -> str 
+  | SQLTable str -> str
   | Filter (b, expr) -> 
     "filter (" ^ (string_of_cypr_bool b) ^ ") (" ^ (string_of_ast expr) ^ ")"
   | Map (mc, expr) ->
@@ -30,6 +30,8 @@ let rec string_of_ast expr =
   | Filter_Max (lst, attr, expr) ->
     "filter_max (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
     (string_of_ast expr)^ ")"
+  | Var x -> x 
+  | Let (x, e1, e2) -> "let " ^ "x = " ^ (string_of_ast e1) ^ " in " ^ (string_of_ast e2)
   | CountInst (col, expr) -> 
     "count (" ^ (string_of_attribute_list col) ^ ") (" ^ string_of_ast expr ^ ")"
 

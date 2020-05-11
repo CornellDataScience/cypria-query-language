@@ -1,9 +1,10 @@
-UNITS=interpreter reverse_parser parser variable
-MLS_WITHOUT_MLIS=ast
+UNITS=interpreter reverse_parser parser variable 
+MLS_WITHOUT_MLIS=ast main
 MLS=$(UNITS:=.ml) $(MLS_WITHOUT_MLIS:=.ml)
 OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo) 
 MLIS=$(UNITS:=.mli)
 TEST=test.byte
+MAIN=main.byte
 REPL=repl.byte
 OCAMLBUILD=ocamlbuild -use-ocamlfind -pkgs oUnit,str
 PKGS=oUnit,str
@@ -20,6 +21,9 @@ test:
 repl:
 	$(OCAMLBUILD) $(REPL) && ./$(REPL)
 
+main: 
+	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
+	
 check:
 	bash checkenv.sh && bash checktypes.sh
 

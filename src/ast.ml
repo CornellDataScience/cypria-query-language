@@ -1,5 +1,7 @@
 (** The AST types for Cypria *)
 
+type id = Variable.t
+
 (** Expression is a top-level Cypria statement, which is of Cypria-type 'table'. *)
 type expression = 
   (** A base-level SQL table. Like [SQLTable "RESERVES"]. *)
@@ -10,6 +12,8 @@ type expression =
   | Delete of cypr_bool option * expression
   | Filter_Min of attribute_list * string * expression
   | Filter_Max of attribute_list * string * expression
+  | Let of id * expression * expression
+  | Var of id 
   | CountInst of attribute_list * expression
 and cypr_bool =
   (** SQL Bool is a boolean statement valid in SQL. *)

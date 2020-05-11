@@ -28,13 +28,13 @@ let expr_map = Map (ProjectCols ["SAILORS.SID"; "SAILORS.NAME"], SQLTable "SAILO
 let make_eval_test_expr (name:string) (expr:expression) (sql_out:sql_string) : test = 
   name >:: (
     fun _ -> assert_equal
-        sql_out (eval expr Variable.empty_list) ~printer:(fun x -> x)
+        sql_out (eval expr Variable.empty_env) ~printer:(fun x -> x)
   )
 
 let make_eval_test_bool (name:string) (bexpr:cypr_bool) (sql_out:sql_string) : test = 
   name >:: (
     fun _ -> assert_equal
-        sql_out (eval_bool bexpr Variable.empty_list) ~printer:(fun x -> x)
+        sql_out (eval_bool bexpr Variable.empty_env) ~printer:(fun x -> x)
   )
 
 let make_eval_test_string_attribute (name:string) (lst:attribute_list) (sql_out:sql_string) : test = 
@@ -61,6 +61,10 @@ let eval_tests = [
     "SELECT SAILORS.NAME FROM (SELECT * FROM (SAILORS))";
   make_eval_test_expr "test Map3" (Map (ProjectCols [""], SQLTable ""))
     "SELECT  FROM (SELECT * FROM ())";
+  make_eval_test_expr "test let"  (Let ("x", (Map (ProjectCols [ ""], SQLTable "")), (Var "x")))
+    "SELECT  FROM (SELECT * FROM ())";
+  make_eval_test_bool "test bool"  (SQLBool "true") "true";
+  make_eval_test_bool "test bool"  (SQLBool "") "";
   make_eval_test_expr "test CountInst" (CountInst (["sid"], SQLTable "SAILORS")) 
     "SELECT (sid, COUNT(*)) AS count\nFROM (SELECT * FROM (SAILORS)) GROUP BY (sid)";
   make_eval_test_bool "test bool" (SQLBool "true") "true";
@@ -109,7 +113,7 @@ let eval_tests = [
 let make_parser_test_map (name:string) (cypr_str:string) (ast_out:map_configuration) : test = 
   name >:: (
     fun _ -> assert_equal
-        ast_out (Parser.parse_map cypr_str) ~printer:(
+        ast_out (Parser.parse_map_configuration cypr_str) ~printer:(
         fun pcols -> match pcols with 
           | ProjectCols(x) -> string_of_attribute_list x
       )

@@ -23,7 +23,7 @@
   text-align: left;
   margin-left: auto;
   margin-right: auto;
-  width: 65rem;
+  width: 63rem;
   height: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -52,7 +52,7 @@
 
 #intro-image {
   display: block;
-  background: url('../images/cornell.png') no-repeat;
+  background: url('../images/cypria_logo.svg') no-repeat;
   background-position: center top;
   background-size: contain;
   height: 160px;
@@ -62,7 +62,7 @@
 
 #intro-download {
   display: block;
-  background-color: #7bd3f7;
+  background-color: rgb(253, 192, 222);
   border-radius: 5px;
   width: 100%;
   margin-left: auto;
@@ -176,12 +176,36 @@
 
 .other {
   grid-area: other;
+  align-self: center;
+  justify-self: center;
 }
 
 .other h1 {
   font-size: 24px;
+  text-align: center;
 }
 
-/* Screens smaller than 800px */
+/* Screens smaller than 750px */
 
-@media only screen and (max-width: 800px) {}
+@media only screen and (max-width: 750px) {
+  .main-container {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+  }
+  .main {
+    margin-top: 40px;
+    align-self: center;
+    grid-template-columns: 1fr;
+    grid-template-rows: 5fr 5fr 4fr 4fr;
+    grid-template-areas: "intro" "playground" "links" "other";
+    column-gap: unset;
+    row-gap: 40px;
+    width: 500px;
+    height: auto;
+    overflow-x: scroll;
+  }
+  footer {
+    height: auto;
+  }
+}

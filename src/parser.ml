@@ -8,7 +8,7 @@ open Str
 exception ParseError of string
 
 (** Constants *)
-let keywords = ["filter"; "map"; "has_rows"; "contains"; "project_cols"]
+let keywords = ["filter"; "map"; "has_rows"; "contains"; "project_cols"; "insert"; "delete"; "let"]
 let infix_keywords = ["&&"]
 
 (** [explode s] is the char list of the characters strung together 
@@ -111,11 +111,6 @@ let next_prefix_keyword str : string * string =
   | word::t when List.mem word keywords -> (word, string_join " " t)
   | word::t -> ("", str)
 
-let parse_ast_from_string str : expression option = 
-  match next_prefix_keyword str with 
-  | ("", str) -> None 
-  | (keyword, rest) -> failwith "unimplemented"
-
 (** [str_to_lst s] converts a pseudo-list of strings delimited by [,] (commas) 
     into an OCaml [string list]. 
     Example: [str_to_lst "hello, my, name, is, david"] 
@@ -129,18 +124,6 @@ let str_to_lst s : string list =
 let func_param s : string = 
   let fst_space = String.index s ' ' in
   String.sub s (fst_space + 1) (String.length s - fst_space - 1) |> String.trim
-
-let parse_map str : map_configuration = 
-  (* Checks for parentheses in the function parameters *)
-  let params = str |> func_param in
-  let str_pair = params |> next_paren_contained_string in
-  let res = 
-    match fst str_pair with
-    | "" -> params (* No parentheses in the parameters *)
-    | valid_str -> valid_str in
-  (* accounts for beginning '[' and end ']' *)
-  let str_without_brackets = String.sub res 1 (String.length res - 2) in
-  ProjectCols (str_to_lst str_without_brackets)
 
 (** [trim_parens str] removes all the outer parentheses from [str].
     Caution: If used on a tuple, it will get rid of the parentheses there too.
@@ -175,6 +158,65 @@ let parse_tuple_or_expr str : tuple_or_expression option =
 
 
 
+let is_capitalized s = 
+  let forced_uppercase = String.capitalize_ascii s in 
+  String.equal s forced_uppercase
+
+let string_between str start fin = 
+  String.sub str start (fin - start)  
+
+(** [index_of_in_opt str i_start] is option containing the index of the 
+    letter i in the first occurance of 'in', 
+    starting from [i_start] (inclusive) *)
+let rec index_of_in_opt str i_start = 
+  try 
+    match String.index_from_opt str i_start 'i' with 
+    | None -> None 
+    | Some i_index -> 
+      begin
+        match String.index_from_opt str i_index 'n' with 
+        | None -> None 
+        | Some n_index -> if (n_index - i_index) = 1 
+          then Some (i_index) 
+          else index_of_in_opt str (i_index + 1)
+      end
+  with 
+  | Invalid_argument _ -> None 
+
+(** [partition_let_in _let_str] is the partition option of _let_str 
+    into the substring before 'in' and the substring after 'in', 
+    where 'in' is the properly matched 'in' associated with the 
+    first 'let' in _let_str. 
+
+    @returns Some (left_partition, right_partition) where _let_str 
+    takes the form left_partition ^ " in " ^ right_partition *)
+let partition_let_in _let_str = 
+  let rec partition_helper _let_str_list stack = 
+    match _let_str_list with 
+    | ("let", _)::tl -> partition_helper tl (()::stack)
+    | ("in", n )::tl -> 
+      begin 
+        let new_stack = List.tl stack in 
+        match new_stack with 
+        | [] -> n 
+        | _ -> partition_helper tl new_stack 
+      end 
+    | (_, _)::tl -> partition_helper tl stack
+    | [] -> -1 
+  in 
+  let str_lst = String.split_on_char ' ' _let_str 
+                |> List.mapi (fun idx word -> (word, idx)) in 
+  let in_index = partition_helper str_lst [] in 
+  if in_index = -1 then None 
+  else 
+    let (left_partition, right_partition) = 
+      List.partition (fun (word,idx) -> idx < in_index) str_lst |>
+      fun (l1, l2) -> ((List.map (fun (word,idx) -> word) l1),
+                       (List.map (fun (word,idx) -> word) (List.tl l2)))
+    in Some (left_partition |> string_join " ",
+             right_partition |> string_join " ")
+
+
 (* [get_paren_str str idx acc num] returns the first substring in str that is in 
    parentheses at index idx*)
 let rec get_paren_str str idx acc num=
@@ -184,8 +226,113 @@ let rec get_paren_str str idx acc num=
   else if( c = '(') then get_paren_str str (idx+1) (suffix_char acc c) (num+1)
   else  get_paren_str str (idx+1) (suffix_char acc c) num
 
+let rec parse_ast_from_string str : expression option = 
+  match next_prefix_keyword str with 
+  | ("", str) -> if is_capitalized str then Some (SQLTable str) else Some (Var str)
+  | (keyword, rest) when keyword = "filter" -> parse_filter str
+  | (keyword, rest) when keyword = "map" -> parse_map str
+  | (keyword, rest) when keyword = "insert" -> raise (ParseError "unimplemented")
+  | (keyword, rest) when keyword = "delete" -> raise (ParseError "unimplemented")
+  | (keyword, rest) when keyword = "let" -> parse_let str 
+  | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
+
+and assert_parse_ast_from_string str = 
+  match parse_ast_from_string str with 
+  | Some ast -> ast 
+  | None -> raise (ParseError ("Error in: " ^ str))
+
+(** Expects one unit of whitespace between 'let' 'x' '=' 'e1' and 'e2. *)
+and parse_let str = 
+  let _VAR_START_INDEX = 4 in 
+  match next_prefix_keyword str with 
+  | (keyword, rest) when keyword = "let" ->
+    begin
+      match String.index_opt str '=' with 
+      | None -> raise (ParseError "Expected token: =")
+      | Some equals_index -> 
+        begin 
+          let var_name = string_between str _VAR_START_INDEX (equals_index - 1) in 
+          match partition_let_in str with 
+          | Some (e1_plus, e2_str) -> 
+            let e1_str = 
+              String.sub 
+                e1_plus 
+                (equals_index + 2) 
+                ((String.length e1_plus) - (equals_index + 2))
+            in 
+            Some (Let (
+                var_name, 
+                e1_str |> assert_parse_ast_from_string,
+                e2_str |> assert_parse_ast_from_string))
+          | None -> raise (ParseError "Expected token: in.")
+        end
+    end 
+  | _ -> raise (ParseError "Expected token: let") 
+
+and parse_filter str : expression option = 
+  match next_prefix_keyword str with 
+  | (keyword, rest) when keyword = "filter" -> 
+    begin 
+      match next_paren_contained_string rest with 
+      | (bool_str, rest) -> 
+        if bool_str = "" 
+        then raise (ParseError ("Malformed filter: " ^ str))
+        else 
+          let cypr_bool = parse_bool bool_str in 
+          let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
+                                                |> fun (str, rest) -> str) in 
+          match sub_expr with 
+          | Some sub_expr ->
+            Some (Filter (cypr_bool, sub_expr))
+          | None -> None
+    end
+  | _ -> raise (ParseError "Expected token: filter")
+
+and parse_map str : expression option = 
+  match next_prefix_keyword str with  
+  | (keyword, rest) when keyword = "map" -> 
+    begin 
+      match next_paren_contained_string rest with
+      | (map_config_str, rest) -> 
+        if map_config_str = "" 
+        then raise (ParseError ("Malformed map: " ^ str))
+        else 
+          let map_config = parse_map_configuration map_config_str in 
+          let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
+                                                |> fun (str, rest) -> str) in
+          match sub_expr with 
+          | Some sub_expr ->
+            Some (Map (map_config, sub_expr))
+          | None -> None
+    end
+  | _ -> raise (ParseError "Expected token: map")
+
+and parse_map_configuration str : map_configuration = 
+  (* Checks for parentheses in the function parameters *)
+  let params = str |> func_param in
+  let str_pair = params |> next_paren_contained_string in
+  let res = 
+    match fst str_pair with
+    | "" -> params (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+  (* accounts for beginning '[' and end ']' *)
+  let str_without_brackets = String.sub res 1 (String.length res - 2) in
+  ProjectCols (str_to_lst str_without_brackets)
+
+and parse_tuple_or_expr str : tuple_or_expression option = 
+  let trimmed_str = str |> String.trim in
+  if String.sub trimmed_str 0 1 = "(" && 
+     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ")" then 
+    let str_without_paren = trim_parens trimmed_str in 
+    let lst_of_tup_elts = 
+      str_without_paren |> str_to_lst |> List.map remove_quotes in
+    Some (Tuple lst_of_tup_elts)
+  else match parse_ast_from_string str with
+    | None -> None
+    | Some expr -> Some (Expression expr)
+
 (* [parse_bool str] parses string [str] into a cypr_bool*)
-let rec parse_bool str : cypr_bool =
+and parse_bool str : cypr_bool =
   let and_reg = Str.regexp "&&" in
   let or_reg = Str.regexp "||" in
   let not_reg = Str.regexp "not" in
@@ -203,13 +350,13 @@ let rec parse_bool str : cypr_bool =
       let (s1,str) = next_paren_contained_string(s) in 
       let (s2,_) = next_paren_contained_string (str) in
       Contains ((match (parse_tuple_or_expr s1) with
-          |None -> failwith "malformed"
+          |None -> raise (ParseError "malformed")
           |Some s -> s)
                , s2)
     else if ((try (Str.search_forward has_rows_reg str contains_offset) with e -> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-9)
     then 
       HasRows (match (parse_ast_from_string (sub)) with
-          |None -> failwith "malformed"
+          |None -> raise (ParseError "malformed")
           |Some s -> s)
     else if ((try (Str.search_forward not_reg str not_offset) with e-> -1) == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-4)
     then (Not (bool))
@@ -250,14 +397,14 @@ let rec parse_bool str : cypr_bool =
     let (s1,str) = next_paren_contained_string(s) in 
     let (s2,_) = next_paren_contained_string (str) in
     Contains ((match (parse_tuple_or_expr s1) with
-        |None -> failwith "malformed"
+        |None -> raise (ParseError "malformed")
         |Some s -> s)
              , s2)
   else if ((try (Str.search_forward has_rows_reg str 0) with Not_found -> -1) >= 0)
   then let s = Str.string_after str ((Str.search_forward (has_rows_reg) str 0)+8) in
     let str_pair = next_paren_contained_string(s) in 
     HasRows (match (parse_ast_from_string (fst str_pair)) with
-        |None -> failwith "malformed"
+        |None -> raise (ParseError "malformed")
         |Some s -> s)
   else if ((try (Str.search_forward or_reg str 0) with Not_found -> -1) >= 0)
   then let lst = Str.bounded_split (or_reg) str 2 in
