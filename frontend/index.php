@@ -48,10 +48,7 @@
       <div class="playground section">
         <h1>Try Cypria</h1>
         <form id="code-box">
-          <textarea id="code">
-(* Try writing some code here! *)
-let tbl = "products" in
-tbl |> filter_max ["name";"price"] "price"&#13;&#10;</textarea>
+          <textarea id="code">map (project_cols [name]) (Sailors)</textarea>
         </form>
         <div id="code-output">
           <pre><code class="output">SELECT name, MAX(price) as price FROM products</code></pre>

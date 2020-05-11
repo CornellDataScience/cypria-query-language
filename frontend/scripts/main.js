@@ -6,14 +6,9 @@ $(document).ready(function () {
 
     $.ajax({
       url: "http://lang.cypriaql.com/cypria",
-      // url: "https://reqres.in/api/users/2",
       type: "POST",
       data: {
         cypria_raw: $code
-      },
-      dataType: "json",
-      headers: {
-        "Content-Type": "application/json"
       }
     }).done(function (res) {
       $("pre").html(`<code>${JSON.stringify(res, undefined, 2)}</code>`);
