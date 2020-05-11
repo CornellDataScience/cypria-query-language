@@ -58,7 +58,12 @@ nav a {
   column-gap: 10px;
 }
 
+.nav-toggle {
+  display: none;
+}
+
 .item {
+  display: block;
   justify-self: center;
   align-self: center;
   height: 100%;
@@ -70,10 +75,54 @@ nav a {
   font-weight: 200;
 }
 
-/* Screens smaller than 800px */
+.shown {
+  display: block !important;
+}
 
-@media only screen and (max-width: 800px) {
+/* Screens smaller than 750px */
+
+@media only screen and (max-width: 750px) {
   nav {
     overflow: hidden;
+    height: 80px;
+    grid-template-columns: 1fr 1fr;
+  }
+  #nav-items {
+    display: block;
+  }
+  .item {
+    display: none;
+    position: absolute;
+    background-color: #e0ba75;
+    opacity: 0.9;
+    height: 80px;
+    width: 100%;
+    right: 0;
+    text-align: center;
+  }
+  .item>h1 {
+    font-size: 24px;
+    font-weight: 500;
+  }
+  #nav-item1 {
+    top: 80px;
+  }
+  #nav-item2 {
+    top: 160px;
+  }
+  #nav-item3 {
+    top: 240px;
+  }
+  .nav-toggle {
+    display: block;
+    height: 100%;
+    width: 40px;
+    position: relative;
+  }
+  .nav-toggle>svg {
+    display: block;
+    position: absolute;
+    top: calc(50% - 16px);
+    left: calc(50% - 16px);
   }
 }

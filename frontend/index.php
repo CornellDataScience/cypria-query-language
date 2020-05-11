@@ -9,8 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cypria Querying Language</title>
   <!-- Favicon -->
-  <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
-  <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+  <?php include("includes/favicon.php") ?>
   <!-- CSS -->
   <link rel="stylesheet" type="text/css" href="css/main.css">
   <link rel="stylesheet" type="text/css" href="css/nav.css">
@@ -50,14 +49,14 @@
       </div>
       <div class="playground section">
         <h1>Try Cypria</h1>
-        <div id="code-box">
-          <textarea>
+        <form id="code-box">
+          <textarea id="code">
 (* Try writing some code here! *)
 let tbl = "products" in
 tbl |> filter_max ["name";"price"] "price"&#13;&#10;</textarea>
-        </div>
+        </form>
         <div id="code-output">
-          <pre><span class="output">SELECT name, MAX(price) as price FROM products</span></pre>
+          <pre><code class="output">SELECT name, MAX(price) as price FROM products</code></pre>
         </div>
         <button id="run-button">Run code</button>
       </div>
