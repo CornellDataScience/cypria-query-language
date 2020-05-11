@@ -1,0 +1,20 @@
+{
+  "name": "cypria_lang_server",
+  "version": "1.0.0",
+  "description": "Language server for the Cypria Query Language ",
+  "main": "backend.js",
+  "scripts": {
+    "backend": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "CDS",
+  "license": "ISC",
+  "dependencies": {
+    "pm2": "^4.4.0",
+    "bs-platform": "^5.2.1",
+    "child_process": "^1.0.2",
+    "consolidate": "^0.15.1",
+    "express": "^4.17.1",
+    "hash.js": "^1.1.7",
+    "hbs": "^4.0.6"
+  }
+}
