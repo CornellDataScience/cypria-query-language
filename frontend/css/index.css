@@ -17,7 +17,7 @@
 }
 
 .main {
-  grid-area: "main";
+  grid-area: main;
   align-self: start;
   justify-self: center;
   text-align: left;
@@ -202,9 +202,22 @@
     grid-template-areas: "intro" "playground" "links" "other";
     column-gap: unset;
     row-gap: 40px;
-    width: 500px;
     height: auto;
-    overflow-x: scroll;
+    overflow-x: auto;
+  }
+  .section {
+    font-size: 20px;
+    width: 80vw;
+    min-width: 300px;
+  }
+  #intro-download {
+    font-size: 16px;
+  }
+  #code-box>textarea {
+    font-size: 16px;
+  }
+  #code-output>pre {
+    font-size: 16px;
   }
   footer {
     height: auto;

@@ -21,5 +21,10 @@ $(document).ready(function () {
     }).fail(function (jqXHR, err) {
       $("pre").text(`Request failed with:\n${jqXHR.status} ${jqXHR.statusText}`);
     });
-  })
+  });
+
+  /* Toggles navigation bar in smaller screens */
+  $(".nav-toggle").click(() => {
+    $(".item").toggleClass("shown");
+  });
 });
