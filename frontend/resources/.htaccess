@@ -9,3 +9,5 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule .* - [R=404,L]
 </IfModule>
+
+Header set Access-Control-Allow-Origin "*"
