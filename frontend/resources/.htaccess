@@ -10,4 +10,6 @@
     RewriteRule .* - [R=404,L]
 </IfModule>
 
-Header set Access-Control-Allow-Origin "*"
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
