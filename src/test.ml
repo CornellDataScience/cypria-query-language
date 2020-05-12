@@ -155,9 +155,9 @@ let parser_tests = [
   make_parser_test_map "test parse_map \"project_cols ([sid, bid])\"" 
     "project_cols ([sid, bid])" (ProjectCols ["sid"; "bid"]);
   make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
-    "(\"Example\", \"Tuple\")" (Some (Tuple ["Example"; "Tuple"]));
+    "<\"Example\", \"Tuple\">" (Some (Tuple ["Example"; "Tuple"]));
   make_parser_test_tup_or_expr "test it on tuple with extra parens" 
-    "((('Example', 'Tuple')))" (Some (Tuple ["Example"; "Tuple"]));
+    "<(('Example', 'Tuple'))>" (Some (Tuple ["Example"; "Tuple"]));
   make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
     "Not a tuple" (None);
   make_parser_test_bool "test parse_bool paren1" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));

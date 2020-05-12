@@ -146,6 +146,15 @@ let rec trim_parens str =
   then String.sub str 1 (len - 2) |> trim_parens 
   else str
 
+(** [trim_tuple_parens str] removes all the outer triangle bracket symbols 
+    from [str]. *)
+let rec trim_tuple_parens str =
+  let len = String.length str in
+  if len <= 1 then str
+  else if String.sub str 0 1 = "<" && String.sub str (len - 1) 1 = ">" 
+  then String.sub str 1 (len - 2) |> trim_tuple_parens 
+  else str
+
 (** [remove_quotes str] removes outer quote characters from [str]. *)
 let remove_quotes str =
   let len = String.length str in
@@ -338,9 +347,9 @@ and parse_map_configuration str : map_configuration =
 
 and parse_tuple_or_expr str : tuple_or_expression option = 
   let trimmed_str = str |> String.trim in
-  if String.sub trimmed_str 0 1 = "(" && 
-     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ")" then 
-    let str_without_paren = trim_parens trimmed_str in 
+  if String.sub trimmed_str 0 1 = "<" && 
+     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ">" then 
+    let str_without_paren = trimmed_str |> trim_tuple_parens |> trim_parens in 
     let lst_of_tup_elts = 
       str_without_paren |> str_to_lst |> List.map remove_quotes in
     Some (Tuple lst_of_tup_elts)

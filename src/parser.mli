@@ -16,9 +16,8 @@ val parse_map_configuration : string -> map_configuration
 
 (** [parse_tuple_or_expr str] evaluates a string in Cypria to either a [Tuple]
     or an [Expression]. 
-    TODO: Condition to accept string as tuple needs to be changed to be 
-    much more rigorous. Currently just checks the first and last characters 
-    to be '(' and ')' which is not good enough. *)
+    Currently just checks the first and last characters to be '<' and '>', 
+    which is rather temporary of a solution. *)
 val parse_tuple_or_expr : string -> tuple_or_expression option
 
 val parse_bool : string -> cypr_bool
