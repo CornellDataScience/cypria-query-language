@@ -8,7 +8,18 @@ open Str
 exception ParseError of string
 
 (** Constants *)
-let keywords = ["filter"; "map"; "has_rows"; "contains"; "project_cols"; "insert"; "delete"; "let"]
+let keywords = [
+  "filter"; 
+  "map"; 
+  "has_rows"; 
+  "contains"; 
+  "project_cols"; 
+  "insert"; 
+  "delete"; 
+  "let";
+  "count_instances"
+]
+
 let infix_keywords = ["&&"]
 
 (** [explode s] is the char list of the characters strung together 
@@ -197,6 +208,7 @@ let rec parse_ast_from_string str : expression option =
   | (keyword, rest) when keyword = "insert" -> raise (ParseError "unimplemented")
   | (keyword, rest) when keyword = "delete" -> raise (ParseError "unimplemented")
   | (keyword, rest) when keyword = "let" -> parse_let str 
+  | (keyword, rest) when keyword = "count_instances" -> parse_count_instances str
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
 
 and assert_parse_ast_from_string str = 
@@ -204,6 +216,24 @@ and assert_parse_ast_from_string str =
   | Some ast -> ast 
   | None -> raise (ParseError ("Error in: " ^ str))
 
+and parse_count_instances str = 
+  match next_prefix_keyword str with 
+  | (keyword, rest) when keyword = "count_instances" -> 
+    begin
+      match next_paren_contained_string rest with
+      | (map_config_str, rest) -> 
+        if map_config_str = "" 
+        then raise (ParseError ("Malformed map: " ^ str))
+        else 
+          let map_config = parse_map_configuration map_config_str in 
+          let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
+                                                |> fun (str, rest) -> str) in
+          match sub_expr with 
+          | Some sub_expr ->
+            Some (Map (map_config, sub_expr))
+          | None -> None
+    end
+  | _ -> raise (ParseError "Expected token: count_instances")
 (** Expects one unit of whitespace between 'let' 'x' '=' 'e1' and 'e2. *)
 and parse_let str = 
   let _VAR_START_INDEX = 4 in 
