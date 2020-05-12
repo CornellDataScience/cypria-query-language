@@ -29,10 +29,10 @@ let rec eval expr env : sql_string =
                    ^ (eval_bool c env))
     | Filter_Min (attr_lst, attr, expr) 
       -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", min(" ^ attr 
-         ^ ") as " ^ attr ^ "FROM (" ^ (eval expr env) ^ ")"
+         ^ ") as " ^ attr ^ " \nFROM (" ^ (eval expr env) ^ ")"
     | Filter_Max (attr_lst, attr, expr) 
       -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", max(" ^ attr 
-         ^ ") as " ^ attr ^ "FROM (" ^ (eval expr env) ^ ")"
+         ^ ") as " ^ attr ^ " \nFROM (" ^ (eval expr env) ^ ")"
     | Var s -> eval_var s env
     | Let (x, e1, e2) -> 
       let sql_string_1 = eval e1 env in 

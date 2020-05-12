@@ -18,7 +18,9 @@ let keywords = [
   "delete"; 
   "let";
   "count_instances";
-  "join"
+  "join";
+  "filter_max";
+  "filter_min"
 ]
 
 let infix_keywords = ["&&"]
@@ -244,6 +246,8 @@ let rec parse_ast_from_string str : expression option =
   | (keyword, rest) when keyword = "let" -> parse_let str 
   | (keyword, rest) when keyword = "count_instances" -> parse_count_instances str
   | (keyword, rest) when keyword = "join" -> parse_join str
+  | (keyword, rest) when keyword = "filter_max" -> parse_filter_minmax str true
+  | (keyword, rest) when keyword = "filter_min" -> parse_filter_minmax str false
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
 
 and assert_parse_ast_from_string str = 
@@ -539,3 +543,45 @@ and parse_delete  str :  expression option =
 (*match (parse_ast_from_string expr) with 
   |None -> failwith "malformed" 
   |Some s -> s))*)
+
+(** parse_insert ASSUMES string passed in is of the form: "insert(__) (__) (__)
+    or insert (__) (__)" *)
+and parse_filter_minmax  str is_max :  expression option = 
+  (*let params = str |> func_param in*)
+  let str_pair = str |> next_paren_contained_string in
+  let lst = 
+    match (fst str_pair) with
+    | "" -> "" (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+  let str_pair2 = (snd str_pair) |> next_paren_contained_string in
+  let attr = 
+    match (fst str_pair2) with
+    | "" -> "" (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+
+  let str_pair3 = (snd str_pair2) |> next_paren_contained_string in
+  let expr = 
+    match (fst str_pair3) with
+    | "" -> "" (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+
+  (* accounts for beginning '[' and end ']' *)
+  if(is_max)
+  then
+    Some (
+      Filter_Max((str_to_lst lst), 
+                 attr, match (parse_ast_from_string expr) with
+        | None -> failwith "malformed"
+        | Some s -> s
+                ))
+  else 
+    Some (
+      Filter_Min((str_to_lst lst), 
+                 attr, match (parse_ast_from_string expr) with
+        | None -> failwith "malformed"
+        | Some s -> s
+                ))
+
+(* ) match (parse_ast_from_string expr) with 
+   |None -> failwith "malformed" 
+   |Some s -> s))*)
