@@ -34,6 +34,9 @@ let rec string_of_ast expr =
   | Let (x, e1, e2) -> "let " ^ "x = " ^ (string_of_ast e1) ^ " in " ^ (string_of_ast e2)
   | CountInst (col, expr) -> 
     "count (" ^ (string_of_attribute_list col) ^ ") (" ^ string_of_ast expr ^ ")"
+  | Join (cond, expr1, expr2) -> 
+    "join (" ^ (string_of_cypr_bool cond) ^ ") (" ^ string_of_ast expr1 ^ ") (" ^
+    (string_of_ast expr2) ^ ")"
 
 and string_of_cypr_bool = function 
   | SQLBool s -> s 

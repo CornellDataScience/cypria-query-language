@@ -4,7 +4,7 @@ open Variable
 type sql_string = string
 
 exception UnboundVariable of string 
-
+exception TypeError of string
 (** [eval expr] is the evaluation function for the abstract syntax tree [expr]. *)
 let rec eval expr env : sql_string =
   begin 
@@ -39,10 +39,21 @@ let rec eval expr env : sql_string =
       let env' = update_env x sql_string_1 env in 
       eval e2 env'
     | CountInst (col, expr) ->
-      "SELECT (" ^ (string_of_attribute_list col) 
-      ^ ", COUNT(*)) AS count\nFROM (" ^ eval expr env ^ ")" 
-      ^ " GROUP BY (" ^ (string_of_attribute_list col) ^ ")"
+      "SELECT " ^ (string_of_attribute_list col) 
+      ^ ", COUNT(*) AS count\nFROM (" ^ eval expr env ^ ")" 
+      ^ " GROUP BY " ^ (string_of_attribute_list col) 
+    | Join (join_cond, expr1, expr2) -> 
+      let table_2_str = assert_SQLTable expr2 in
+      (* For now expr2 must be a SQLTable, support for general expressions 
+         required aliasing in the target SQL *)
+      "SELECT * FROM (" ^ (eval expr1 env) ^ ") JOIN " ^ (table_2_str) ^ 
+      " ON (" ^ (eval_bool join_cond env) ^ ")"
   end 
+
+and assert_SQLTable (expr) = 
+  match expr with 
+  | SQLTable str -> str 
+  | _ -> raise (TypeError "Expected SQL Table")
 
 and eval_map map_config expr used_variables = 
   begin

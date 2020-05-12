@@ -15,6 +15,7 @@ type expression =
   | Let of id * expression * expression
   | Var of id 
   | CountInst of attribute_list * expression
+  | Join of cypr_bool * expression * expression
 and cypr_bool =
   (** SQL Bool is a boolean statement valid in SQL. *)
   | SQLBool of string 
