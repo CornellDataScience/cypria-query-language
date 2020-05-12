@@ -17,7 +17,8 @@ let keywords = [
   "insert"; 
   "delete"; 
   "let";
-  "count_instances"
+  "count_instances";
+  "join"
 ]
 
 let infix_keywords = ["&&"]
@@ -233,6 +234,7 @@ let rec parse_ast_from_string str : expression option =
   | (keyword, rest) when keyword = "delete" -> parse_delete str
   | (keyword, rest) when keyword = "let" -> parse_let str 
   | (keyword, rest) when keyword = "count_instances" -> parse_count_instances str
+  | (keyword, rest) when keyword = "join" -> parse_join str
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
 
 and assert_parse_ast_from_string str = 
@@ -240,24 +242,46 @@ and assert_parse_ast_from_string str =
   | Some ast -> ast 
   | None -> raise (ParseError ("Error in: " ^ str))
 
+and parse_join str = 
+  match next_prefix_keyword str with 
+  | (keyword, rest) when keyword = "join" -> 
+    begin
+      match next_paren_contained_string rest with
+      | (join_cond_str, rest) -> 
+        if join_cond_str = "" 
+        then raise (ParseError ("Malformed join: " ^ str))
+        else 
+          let join_bool =  parse_bool join_cond_str in 
+          let (sub_str_1, rest') = next_paren_contained_string rest in 
+          let sub_str_2 = next_paren_contained_string rest' 
+                          |> fun (str', _) -> str' in 
+          let sub_exp_1 = sub_str_1 
+                          |> assert_parse_ast_from_string in 
+          let sub_exp_2 = sub_str_2
+                          |> assert_parse_ast_from_string in 
+          Some (Join (join_bool, sub_exp_1, sub_exp_2))
+    end
+  | _ -> raise (ParseError "Expected token: join")
+
 and parse_count_instances str = 
   match next_prefix_keyword str with 
   | (keyword, rest) when keyword = "count_instances" -> 
     begin
       match next_paren_contained_string rest with
-      | (map_config_str, rest) -> 
-        if map_config_str = "" 
-        then raise (ParseError ("Malformed map: " ^ str))
+      | (a_list_str, rest) -> 
+        if a_list_str = "" 
+        then raise (ParseError ("Malformed count_instances: " ^ str))
         else 
-          let map_config = parse_map_configuration map_config_str in 
+          let attribute_list =  parse_attribute_list a_list_str in 
           let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
                                                 |> fun (str, rest) -> str) in
           match sub_expr with 
           | Some sub_expr ->
-            Some (Map (map_config, sub_expr))
+            Some (CountInst (attribute_list, sub_expr))
           | None -> None
     end
   | _ -> raise (ParseError "Expected token: count_instances")
+
 (** Expects one unit of whitespace between 'let' 'x' '=' 'e1' and 'e2. *)
 and parse_let str = 
   let _VAR_START_INDEX = 4 in 
@@ -297,7 +321,9 @@ and parse_filter str : expression option =
         else 
           let cypr_bool = parse_bool (whitespace_delete bool_str "") in 
           let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
-                                                |> fun (str, rest) -> str) in 
+                                                |> fun (str, rest) 
+                                                (* TODO: Catch when str = "" *)
+                                                -> str) in 
           match sub_expr with 
           | Some sub_expr ->
             Some (Filter (cypr_bool, sub_expr))
@@ -323,6 +349,10 @@ and parse_map str : expression option =
           | None -> None
     end
   | _ -> raise (ParseError "Expected token: map")
+
+and parse_attribute_list (str) = 
+  String.sub str 1 (String.length str - 2) |> 
+  str_to_lst
 
 and parse_map_configuration str : map_configuration = 
   (* Checks for parentheses in the function parameters *)

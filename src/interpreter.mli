@@ -1,6 +1,9 @@
 open Ast
 open Variable
 
+exception UnboundVariable of string 
+exception TypeError of string
+
 type sql_string = string
 
 val eval : expression -> Variable.env -> sql_string

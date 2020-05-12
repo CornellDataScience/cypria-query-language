@@ -23,6 +23,7 @@ let execute_input () : unit =
     | None -> Printf.printf "Unknown parsing error.\n"
   with 
   | ParseError e -> Printf.printf "Parsing error: %s" e
+  | Interpreter.TypeError e -> Printf.printf "Typing error: %s" e
 
 let _ = execute_input ()
 
