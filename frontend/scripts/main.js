@@ -11,7 +11,7 @@ $(document).ready(function () {
         cypria_raw: $code
       }
     }).done(function (res) {
-      $("pre").html(`<code>${JSON.stringify(res, undefined, 2)}</code>`);
+      $("pre").html(`<code>${res}</code>`);
     }).fail(function (jqXHR, err) {
       $("pre").text(`Request failed with:\n${jqXHR.status} ${jqXHR.statusText}`);
     });
