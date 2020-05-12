@@ -3,18 +3,12 @@ $(document).ready(function () {
   $("#run-button").click(function () {
     let $code = $.trim($("#code").val());
     $code = $code.replace(/\r?\n|\r/g, " ");
-    console.log($code);
+
     $.ajax({
-      // url: "cypria.cypriaql.com/cypria",
-      url: "https://reqres.in/api/users/2",
-      type: "GET",
+      url: "http://lang.cypriaql.com/cypria",
+      type: "POST",
       data: {
         cypria_raw: $code
-      },
-      // dataType: "jsonp",
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
       }
     }).done(function (res) {
       $("pre").html(`<code>${JSON.stringify(res, undefined, 2)}</code>`);

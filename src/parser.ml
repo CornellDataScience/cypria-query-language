@@ -39,6 +39,32 @@ let rec string_join glue lst =
     | h::t -> join glue t (acc ^ glue ^ h) in 
   join glue lst ""
 
+(**[suffix_char s c] appends a character to a string*)
+let suffix_char s c = s ^ String.make 1 c
+
+let rec whitespace_delete str acc =
+  if (String.length str = 0)
+  then acc
+  else
+    match String.get str 0 with
+    | ' ' ->  whitespace_delete (String.sub str 1 ((String.length str) -1)) acc
+    | c -> whitespace_delete (String.sub str 1 ((String.length str) -1)) (suffix_char acc c)
+
+let rec white_loop str =
+  if String.length str <= 1 then str
+  else
+    match String.get str 0 with
+    |' ' -> white_loop (String.sub str 1 ((String.length str) -1))
+    | c -> str
+
+let rec whitespace_normalize str acc =
+  if (String.length str = 0)
+  then acc
+  else
+    match String.get str 0 with
+    | ' ' ->  let s = white_loop str  in whitespace_normalize s (suffix_char acc ' ')
+    | c -> whitespace_normalize (String.sub str 1 ((String.length str) -1)) (suffix_char acc c)
+
 (** [terminating_paren_index str first_paren_index] is the index of 
     the correctly matched terminating paren for the initial paren at 
     index [first_paren_index]. *)
@@ -129,8 +155,6 @@ let remove_quotes str =
   then String.sub str 1 (len - 2) 
   else str
 
-(**[suffix_char s c] appends a character to a string*)
-let suffix_char s c = s ^ String.make 1 c
 
 let is_capitalized s = 
   let forced_uppercase = String.capitalize_ascii s in 
@@ -192,7 +216,7 @@ let partition_let_in _let_str =
 
 
 (* [get_paren_str str idx acc num] returns the first substring in str that is in 
-   parentheses.*)
+   parentheses at index idx*)
 let rec get_paren_str str idx acc num=
   let c = String.get str idx in
   if(c = ')')
@@ -205,8 +229,8 @@ let rec parse_ast_from_string str : expression option =
   | ("", str) -> if is_capitalized str then Some (SQLTable str) else Some (Var str)
   | (keyword, rest) when keyword = "filter" -> parse_filter str
   | (keyword, rest) when keyword = "map" -> parse_map str
-  | (keyword, rest) when keyword = "insert" -> raise (ParseError "unimplemented")
-  | (keyword, rest) when keyword = "delete" -> raise (ParseError "unimplemented")
+  | (keyword, rest) when keyword = "insert" -> parse_insert str
+  | (keyword, rest) when keyword = "delete" -> parse_delete str
   | (keyword, rest) when keyword = "let" -> parse_let str 
   | (keyword, rest) when keyword = "count_instances" -> parse_count_instances str
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
@@ -271,7 +295,7 @@ and parse_filter str : expression option =
         if bool_str = "" 
         then raise (ParseError ("Malformed filter: " ^ str))
         else 
-          let cypr_bool = parse_bool bool_str in 
+          let cypr_bool = parse_bool (whitespace_delete bool_str "") in 
           let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
                                                 |> fun (str, rest) -> str) in 
           match sub_expr with 
@@ -357,30 +381,33 @@ and parse_bool str : cypr_bool =
       let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3 in
       let offset2 = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 in
       let offset3 = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-5 in
-      let or_idx1 = (try (Str.search_forward or_reg str offset) with e -> 1000000) in
-      let or_idx2 = (try (Str.search_forward or_reg str offset2) with e-> 1000000) in
-      let and_idx1 = (try (Str.search_forward and_reg str offset) with e -> 100000) in
-      let and_idx2 = (try (Str.search_forward and_reg str offset2) with e -> 100000) in
-      let like_idx = (try (Str.search_forward like_reg str offset3) with e -> 100000) in
-      let like_idx2 = (try (Str.search_forward like_reg str offset2) with e -> 100000) in
-      if (or_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)
+      let or_idx1 = (try (Str.search_forward or_reg str offset) with e -> -1) in
+      let or_idx2 = (try (Str.search_forward or_reg str offset2) with e-> -1) in
+      let and_idx1 = (try (Str.search_forward and_reg str offset) with e -> -1) in
+      let and_idx2 = (try (Str.search_forward and_reg str offset2) with e ->  -1) in
+      let like_idx1 = (try (Str.search_forward like_reg str offset3) with e -> -1) in
+      let like_idx2 = (try (Str.search_forward like_reg str offset2) with e -> -1) in
+      let or_exist = (or_idx1 <> -1 || or_idx2 <> -1) in 
+      let and_exist = (and_idx1 <> -1 || and_idx2 <> -1) in
+      let like_exist = (like_idx1 <> -1 || like_idx2 <> -1) in
+      if (or_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3 && or_exist)
       then
         (Or (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)|> parse_bool, bool))
-      else if (or_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1)
+      else if (or_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 && or_exist)
       then
         let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+3 in
         (Or (bool ,String.sub str (offset) ((String.length str)-offset) |> parse_bool))
-      else if (and_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)
+      else if (and_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3 && and_exist)
       then
         (And (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)|> parse_bool, bool))
-      else if (and_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1)
+      else if (and_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 && and_exist)
       then
         let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+3 in
         (And (bool ,String.sub str (offset) ((String.length str)-offset) |> parse_bool))
-      else if (like_idx == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2)
+      else if (like_idx1 == ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2) && like_exist)
       then 
         (Like (String.trim (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2)), String.trim (sub)))
-      else if (like_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub) +1)
+      else if (like_idx2 == ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub) +1) && like_exist)
       then let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 in
         (Like (String.trim (sub), String.trim (String.sub str 0 (offset))))
       else bool
@@ -413,3 +440,62 @@ and parse_bool str : cypr_bool =
     (Not (parse_bool (b1)))
   else SQLBool (String.trim str)
 
+(** parse_insert ASSUMES string passed in is of the form: "insert(__) (__) (__)
+    or insert (__) (__)" *)
+and parse_insert  str :  expression option = 
+  let params = str |> func_param in
+  let str_pair = params |> next_paren_contained_string in
+  let expr = 
+    match fst str_pair with
+    | "" -> params (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+  let str_pair2 = (snd str_pair) |> next_paren_contained_string in
+  let vals = 
+    match fst str_pair2 with
+    | "" -> params (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+
+  let cols = 
+    (if ((String.index (snd str_pair2) '(') == (try (Str.search_forward (Str.regexp vals) str 0) with Not_found -> -1)+(String.length vals)+1)
+     then
+       Some (match (fst ((snd str_pair2) |> next_paren_contained_string)) with
+           | "" -> params (* No parentheses in the parameters *)
+           | valid_str -> valid_str)
+     else
+       None
+    ) in
+  (* accounts for beginning '[' and end ']' *)
+  Some (
+    Insert ((str_to_lst vals), 
+            (match cols with 
+             |None -> None 
+             |Some s -> Some (str_to_lst s)), 
+            match (parse_ast_from_string expr) with 
+            |None -> failwith "malformed" 
+            |Some s -> s))
+
+and parse_delete  str :  expression option = 
+  let params = str |> func_param in
+  let str_pair = params |> next_paren_contained_string in
+  let expr = 
+    match fst str_pair with
+    | "" -> params (* No parentheses in the parameters *)
+    | valid_str -> valid_str in
+  let bools = 
+    (if ((String.index (snd str_pair) '(') == (try (Str.search_forward (Str.regexp expr) str 0) with Not_found -> -1)+(String.length expr)+1)
+     then
+       Some (match (fst ((snd str_pair) |> next_paren_contained_string)) with
+           | "" -> params (* No parentheses in the parameters *)
+           | valid_str -> valid_str)
+     else
+       None
+    ) in
+  (* accounts for beginning '[' and end ']' *)
+  Some (
+    Delete (
+      (match bools with 
+       |None -> None 
+       |Some s -> Some (parse_bool s)), 
+      match (parse_ast_from_string expr) with 
+      |None -> failwith "malformed" 
+      |Some s -> s))

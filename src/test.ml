@@ -160,13 +160,13 @@ let parser_tests = [
     "((('Example', 'Tuple')))" (Some (Tuple ["Example"; "Tuple"]));
   make_parser_test_tup_or_expr "test parse_tuple_or_expr on a tuple" 
     "Not a tuple" (None);
-  make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
+  make_parser_test_bool "test parse_bool paren1" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
   (*make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)&&(E||F)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));*)
   make_parser_test_bool "test parse_bool paren2" "((B&&F)||A)&&(C||D)" (And (Or(And (SQLBool "B", SQLBool "F"),SQLBool "A"),(Or(SQLBool "C",SQLBool "D"))));
-  make_parser_test_bool "test parse_bool paren" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
-  make_parser_test_bool "test parse_bool paren" "not A" (Not (SQLBool "A"));
-  make_parser_test_bool "test parse_bool paren" "(A||B)&&(C=D)" (And (Or(SQLBool "A",SQLBool "B"),(Like( "C","D"))));
-  make_parser_test_bool "test parse_bool paren" "(notA||B)&&(C||D)" (And (Or(Not (SQLBool "A"),SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
+  make_parser_test_bool "test parse_bool paren3" "(A||B)&&(C||D)" (And (Or(SQLBool "A",SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
+  make_parser_test_bool "test parse_bool paren4" "not A" (Not (SQLBool "A"));
+  make_parser_test_bool "test parse_bool paren5" "(A||B)&&(C=D)" (And (Or(SQLBool "A",SQLBool "B"),(Like( "C","D"))));
+  make_parser_test_bool "test parse_bool paren6" "(notA||B)&&(C||D)" (And (Or(Not (SQLBool "A"),SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
   make_parser_test_bool "test parse_bool paren!!!!" "has_rows(A)" (HasRows(SQLTable "A"));
   (*make_parser_test_bool "test parse_bool and" "A && B" (And (SQLBool "A",SQLBool "B"));
     make_parser_test_bool "test parse_bool or" "A || B" (Or (SQLBool "A", SQLBool "B"));
