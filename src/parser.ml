@@ -236,12 +236,11 @@ let rec get_paren_str str idx acc num=
 let rec parse_ast_from_string str : expression option = 
   match next_prefix_keyword str with 
   | ("", str) -> if is_capitalized str then Some (SQLTable str) else Some (Var str)
-  | (keyword, rest) when keyword = "filter" -> parse_filter str
-  | (keyword, rest) when keyword = "map" -> parse_map str
-  | (keyword, rest) when keyword = "insert" -> parse_insert str
-  | (keyword, rest) when keyword = "delete" -> parse_delete str
-  | (keyword, rest) when keyword = "let" -> parse_let str 
-  | (keyword, rest) when keyword = "count_instances" -> parse_count_instances str
+  | (keyword, rest) when keyword = "filter" -> parse_filter (whitespace_normalize str "")
+  | (keyword, rest) when keyword = "map" -> parse_map (whitespace_normalize str "")
+  | (keyword, rest) when keyword = "insert" -> parse_insert (whitespace_normalize str "")
+  | (keyword, rest) when keyword = "delete" -> parse_delete (whitespace_normalize str "")
+  | (keyword, rest) when keyword = "let" -> parse_let (whitespace_normalize str "") 
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
 
 and assert_parse_ast_from_string str = 
@@ -452,23 +451,23 @@ and parse_bool str : cypr_bool =
 (** parse_insert ASSUMES string passed in is of the form: "insert(__) (__) (__)
     or insert (__) (__)" *)
 and parse_insert  str :  expression option = 
-  let params = str |> func_param in
-  let str_pair = params |> next_paren_contained_string in
-  let expr = 
-    match fst str_pair with
-    | "" -> params (* No parentheses in the parameters *)
-    | valid_str -> valid_str in
+  (*let params = str |> func_param in*)
+  let str_pair = str |> next_paren_contained_string in
+  let expr = fst str_pair in
+  (*match (fst str_pair) with
+    | "" -> "" (* No parentheses in the parameters *)
+    | valid_str -> valid_str in*)
   let str_pair2 = (snd str_pair) |> next_paren_contained_string in
-  let vals = 
-    match fst str_pair2 with
-    | "" -> params (* No parentheses in the parameters *)
-    | valid_str -> valid_str in
+  let vals = fst str_pair2 in
+  (*match (fst str_pair2) with
+    | "" -> "" (* No parentheses in the parameters *)
+    | valid_str -> valid_str in*)
 
   let cols = 
-    (if ((String.index (snd str_pair2) '(') == (try (Str.search_forward (Str.regexp vals) str 0) with Not_found -> -1)+(String.length vals)+1)
+    (if ((try (String.index (snd str_pair2) '(') with e -> -1 )== 1(*(try (Str.search_forward (Str.regexp vals) str 0) with Not_found -> -1)+(String.length vals)+1*))
      then
        Some (match (fst ((snd str_pair2) |> next_paren_contained_string)) with
-           | "" -> params (* No parentheses in the parameters *)
+           | "" ->  "" (* No parentheses in the parameters *)
            | valid_str -> valid_str)
      else
        None
@@ -478,10 +477,10 @@ and parse_insert  str :  expression option =
     Insert ((str_to_lst vals), 
             (match cols with 
              |None -> None 
-             |Some s -> Some (str_to_lst s)), 
-            match (parse_ast_from_string expr) with 
-            |None -> failwith "malformed" 
-            |Some s -> s))
+             |Some s -> Some (str_to_lst s)), SQLTable expr)
+    (*match (parse_ast_from_string expr) with 
+      |None -> failwith "malformed" 
+      |Some s -> s)*))
 
 and parse_delete  str :  expression option = 
   let params = str |> func_param in
@@ -491,7 +490,8 @@ and parse_delete  str :  expression option =
     | "" -> params (* No parentheses in the parameters *)
     | valid_str -> valid_str in
   let bools = 
-    (if ((String.index (snd str_pair) '(') == (try (Str.search_forward (Str.regexp expr) str 0) with Not_found -> -1)+(String.length expr)+1)
+    (if ((try (String.index (snd str_pair) '(') with e -> -1 )== 1)
+    (*(String.index (snd str_pair) '(') == (try (Str.search_forward (Str.regexp expr) str 0) with Not_found -> -1)+(String.length expr)+1*)
      then
        Some (match (fst ((snd str_pair) |> next_paren_contained_string)) with
            | "" -> params (* No parentheses in the parameters *)

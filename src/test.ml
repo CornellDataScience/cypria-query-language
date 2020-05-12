@@ -167,7 +167,8 @@ let parser_tests = [
   make_parser_test_bool "test parse_bool paren4" "not A" (Not (SQLBool "A"));
   make_parser_test_bool "test parse_bool paren5" "(A||B)&&(C=D)" (And (Or(SQLBool "A",SQLBool "B"),(Like( "C","D"))));
   make_parser_test_bool "test parse_bool paren6" "(notA||B)&&(C||D)" (And (Or(Not (SQLBool "A"),SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
-  make_parser_test_bool "test parse_bool paren!!!!" "has_rows(A)" (HasRows(SQLTable "A"));
+  (*make_parser_test_bool "test parse_bool paren!!!!" "has_rows(A)" (HasRows(SQLTable "A"));*)
+  make_parser_test_bool "test parse_bool paren6" "(not hair = 2)&&(send = 3)" (And (Or(Not (SQLBool "A"),SQLBool "B"),(Or(SQLBool "C",SQLBool "D"))));
   (*make_parser_test_bool "test parse_bool and" "A && B" (And (SQLBool "A",SQLBool "B"));
     make_parser_test_bool "test parse_bool or" "A || B" (Or (SQLBool "A", SQLBool "B"));
     make_parser_test_bool "test parse_bool not" "not A " (Not (SQLBool "A"));
