@@ -477,10 +477,10 @@ and parse_insert  str :  expression option =
     Insert ((str_to_lst vals), 
             (match cols with 
              |None -> None 
-             |Some s -> Some (str_to_lst s)), 
-            match (parse_ast_from_string expr) with 
-            |None -> failwith "malformed" 
-            |Some s -> s))
+             |Some s -> Some (str_to_lst s)), expr))
+(* ) match (parse_ast_from_string expr) with 
+   |None -> failwith "malformed" 
+   |Some s -> s))*)
 
 and parse_delete  str :  expression option = 
   let params = str |> func_param in
@@ -504,7 +504,7 @@ and parse_delete  str :  expression option =
     Delete (
       (match bools with 
        |None -> None 
-       |Some s -> Some (parse_bool s)), 
-      match (parse_ast_from_string expr) with 
-      |None -> failwith "malformed" 
-      |Some s -> s))
+       |Some s -> Some (parse_bool s)), expr))
+(*match (parse_ast_from_string expr) with 
+  |None -> failwith "malformed" 
+  |Some s -> s))*)
