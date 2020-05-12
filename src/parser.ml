@@ -453,15 +453,15 @@ and parse_bool str : cypr_bool =
 and parse_insert  str :  expression option = 
   (*let params = str |> func_param in*)
   let str_pair = str |> next_paren_contained_string in
-  let expr = fst str_pair in
-  (*match (fst str_pair) with
+  let expr = 
+    match (fst str_pair) with
     | "" -> "" (* No parentheses in the parameters *)
-    | valid_str -> valid_str in*)
+    | valid_str -> valid_str in
   let str_pair2 = (snd str_pair) |> next_paren_contained_string in
-  let vals = fst str_pair2 in
-  (*match (fst str_pair2) with
+  let vals = 
+    match (fst str_pair2) with
     | "" -> "" (* No parentheses in the parameters *)
-    | valid_str -> valid_str in*)
+    | valid_str -> valid_str in
 
   let cols = 
     (if ((try (String.index (snd str_pair2) '(') with e -> -1 )== 1(*(try (Str.search_forward (Str.regexp vals) str 0) with Not_found -> -1)+(String.length vals)+1*))
@@ -477,10 +477,10 @@ and parse_insert  str :  expression option =
     Insert ((str_to_lst vals), 
             (match cols with 
              |None -> None 
-             |Some s -> Some (str_to_lst s)), SQLTable expr)
-    (*match (parse_ast_from_string expr) with 
-      |None -> failwith "malformed" 
-      |Some s -> s)*))
+             |Some s -> Some (str_to_lst s)), 
+            match (parse_ast_from_string expr) with 
+            |None -> failwith "malformed" 
+            |Some s -> s))
 
 and parse_delete  str :  expression option = 
   let params = str |> func_param in
