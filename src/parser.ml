@@ -147,6 +147,15 @@ let rec trim_parens str =
   then String.sub str 1 (len - 2) |> trim_parens 
   else str
 
+(** [trim_tuple_parens str] removes all the outer triangle bracket symbols 
+    from [str]. *)
+let rec trim_tuple_parens str =
+  let len = String.length str in
+  if len <= 1 then str
+  else if String.sub str 0 1 = "<" && String.sub str (len - 1) 1 = ">" 
+  then String.sub str 1 (len - 2) |> trim_tuple_parens 
+  else str
+
 (** [remove_quotes str] removes outer quote characters from [str]. *)
 let remove_quotes str =
   let len = String.length str in
@@ -368,9 +377,9 @@ and parse_map_configuration str : map_configuration =
 
 and parse_tuple_or_expr str : tuple_or_expression option = 
   let trimmed_str = str |> String.trim in
-  if String.sub trimmed_str 0 1 = "(" && 
-     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ")" then 
-    let str_without_paren = trim_parens trimmed_str in 
+  if String.sub trimmed_str 0 1 = "<" && 
+     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ">" then 
+    let str_without_paren = trimmed_str |> trim_tuple_parens |> trim_parens in 
     let lst_of_tup_elts = 
       str_without_paren |> str_to_lst |> List.map remove_quotes in
     Some (Tuple lst_of_tup_elts)
@@ -473,23 +482,23 @@ and parse_bool str : cypr_bool =
 (** parse_insert ASSUMES string passed in is of the form: "insert(__) (__) (__)
     or insert (__) (__)" *)
 and parse_insert  str :  expression option = 
-  let params = str |> func_param in
-  let str_pair = params |> next_paren_contained_string in
+  (*let params = str |> func_param in*)
+  let str_pair = str |> next_paren_contained_string in
   let expr = 
-    match fst str_pair with
-    | "" -> params (* No parentheses in the parameters *)
+    match (fst str_pair) with
+    | "" -> "" (* No parentheses in the parameters *)
     | valid_str -> valid_str in
   let str_pair2 = (snd str_pair) |> next_paren_contained_string in
   let vals = 
-    match fst str_pair2 with
-    | "" -> params (* No parentheses in the parameters *)
+    match (fst str_pair2) with
+    | "" -> "" (* No parentheses in the parameters *)
     | valid_str -> valid_str in
 
   let cols = 
-    (if ((String.index (snd str_pair2) '(') == (try (Str.search_forward (Str.regexp vals) str 0) with Not_found -> -1)+(String.length vals)+1)
+    (if ((try (String.index (snd str_pair2) '(') with e -> -1 )== 1(*(try (Str.search_forward (Str.regexp vals) str 0) with Not_found -> -1)+(String.length vals)+1*))
      then
        Some (match (fst ((snd str_pair2) |> next_paren_contained_string)) with
-           | "" -> params (* No parentheses in the parameters *)
+           | "" ->  "" (* No parentheses in the parameters *)
            | valid_str -> valid_str)
      else
        None
@@ -512,7 +521,8 @@ and parse_delete  str :  expression option =
     | "" -> params (* No parentheses in the parameters *)
     | valid_str -> valid_str in
   let bools = 
-    (if ((String.index (snd str_pair) '(') == (try (Str.search_forward (Str.regexp expr) str 0) with Not_found -> -1)+(String.length expr)+1)
+    (if ((try (String.index (snd str_pair) '(') with e -> -1 )== 1)
+    (*(String.index (snd str_pair) '(') == (try (Str.search_forward (Str.regexp expr) str 0) with Not_found -> -1)+(String.length expr)+1*)
      then
        Some (match (fst ((snd str_pair) |> next_paren_contained_string)) with
            | "" -> params (* No parentheses in the parameters *)

@@ -51,7 +51,7 @@
           <textarea id="code">map (project_cols [name]) (Sailors)</textarea>
         </form>
         <div id="code-output">
-          <pre><code class="output">SELECT name, MAX(price) as price FROM products</code></pre>
+          <pre><code class="output">SELECT name FROM (SELECT * FROM (Sailors))</code></pre>
         </div>
         <button id="run-button">Run code</button>
       </div>
