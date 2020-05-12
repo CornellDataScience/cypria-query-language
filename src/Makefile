@@ -6,7 +6,7 @@ MLIS=$(UNITS:=.mli)
 TEST=test.byte
 MAIN=main.byte
 REPL=repl.byte
-OCAMLBUILD=ocamlbuild -use-ocamlfind -pkgs oUnit,str
+OCAMLBUILD=ocamlbuild -no-hygiene -use-ocamlfind -pkgs oUnit,str
 PKGS=oUnit,str
 
 default: build

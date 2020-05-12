@@ -10,6 +10,7 @@ const hbs = require('hbs');
 var router = express.Router();
 var engine = require('consolidate');
 var child_p = require('child_process');
+var cors = require('cors');
 const fs = require('fs');
 const hash = require('hash.js');
 
@@ -25,20 +26,21 @@ app.use('/scss', express.static('./scss'))
 app.use('/img', express.static('./img'))
 app.use('/bs-platform/lib/js', express.static('./bs-platform/lib/js'))
 app.use('/highlight', express.static('./highlight'))
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
+app.use(cors());
 var path = __dirname;
 const MAX_LESSON = 4;
 
-router.use(function(req, res, next) {
+router.use(function (req, res, next) {
   console.log('/' + req.method);
   next();
 });
 
-router.get('/client.js', function(req, res) {
+router.get('/client.js', function (req, res) {
   res.sendFile(path + '/client.js')
 });
 
-router.get('/', function(req, res) {
+router.get('/', function (req, res) {
   res.sendFile(path + '/index.html');
 });
 
@@ -47,21 +49,25 @@ function postCompileJs(js_code) {
 }
 
 async function compileFromCypriaToSQL(cypria, res) {
+  console.log("<compileFromCypriaToSQL>: call");
   child_p
-      .exec(
-          '"../main.byte" ',
-          (error, stdout, stderr) => {
-            if (error) {
-              res.send('Ran into an error compiling your code:\n' + stderr);
-              return;
-            }
-            console.log(stdout);
-            res.send(stdout);
-          })
-      .stdin.write('Sailors\n');
+    .exec(
+      '"../main.byte" ',
+      (error, stdout, stderr) => {
+        console.log("<compileFromCypriaToSQL>: child process terminated");
+        if (error) {
+          res.send('Ran into an error compiling your code:\n' + stderr);
+          return;
+        }
+        console.log(stdout);
+        res.send(stdout);
+      })
+    .stdin.write(cypria + "\n");
+  console.log("<compileFromCypriaToSQL>: stdin written");
 }
 
 app.post('/cypria', async (req, res) => {
+  console.log("<app.post>: POST request to /cypria endpoint.");
   var cypria_raw = req.body.cypria_raw;
   try {
     await compileFromCypriaToSQL(cypria_raw, res)
@@ -75,7 +81,7 @@ async function getOcamlLesson(lesson_number, res) {
   filename = 'lesson' + lesson_number + '.ml'
   fs.readFile('lessons/' + filename, (err, data) => {
     if (err) throw err
-      res.send(data)
+    res.send(data)
   });
 }
 
