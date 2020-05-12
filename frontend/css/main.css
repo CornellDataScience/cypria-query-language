@@ -58,7 +58,7 @@ h1, h2, h3 {
   background-color: #f2f2f2;
   /* 80px offset for the header on top. */
   height: calc(100vh - 80px);
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 footer {
@@ -97,4 +97,13 @@ footer {
 
 #noscript {
   text-align: center;
+}
+
+/* Screens smaller than 750px */
+
+@media only screen and (max-width: 750px) {
+  .main-container {
+    /* 80px offset for the header on top. */
+    height: calc(100vh - 80px);
+  }
 }

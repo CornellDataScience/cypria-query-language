@@ -144,19 +144,6 @@ let remove_quotes str =
   then String.sub str 1 (len - 2) 
   else str
 
-let parse_tuple_or_expr str : tuple_or_expression option = 
-  let trimmed_str = str |> String.trim in
-  if String.sub trimmed_str 0 1 = "(" && 
-     String.sub trimmed_str (String.length trimmed_str - 1) 1 = ")" then 
-    let str_without_paren = trim_parens trimmed_str in 
-    let lst_of_tup_elts = 
-      str_without_paren |> str_to_lst |> List.map remove_quotes in
-    Some (Tuple lst_of_tup_elts)
-  else match parse_ast_from_string str with
-    | None -> None
-    | Some expr -> Some (Expression expr)
-
-
 
 let is_capitalized s = 
   let forced_uppercase = String.capitalize_ascii s in 
@@ -231,8 +218,8 @@ let rec parse_ast_from_string str : expression option =
   | ("", str) -> if is_capitalized str then Some (SQLTable str) else Some (Var str)
   | (keyword, rest) when keyword = "filter" -> parse_filter str
   | (keyword, rest) when keyword = "map" -> parse_map str
-  | (keyword, rest) when keyword = "insert" -> raise (ParseError "unimplemented")
-  | (keyword, rest) when keyword = "delete" -> raise (ParseError "unimplemented")
+  | (keyword, rest) when keyword = "insert" -> parse_insert str
+  | (keyword, rest) when keyword = "delete" -> parse_delete str
   | (keyword, rest) when keyword = "let" -> parse_let str 
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
 
@@ -278,7 +265,7 @@ and parse_filter str : expression option =
         if bool_str = "" 
         then raise (ParseError ("Malformed filter: " ^ str))
         else 
-          let cypr_bool = parse_bool bool_str in 
+          let cypr_bool = parse_bool (whitespace_delete bool_str "") in 
           let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
                                                 |> fun (str, rest) -> str) in 
           match sub_expr with 
@@ -368,26 +355,29 @@ and parse_bool str : cypr_bool =
       let or_idx2 = (try (Str.search_forward or_reg str offset2) with e-> -1) in
       let and_idx1 = (try (Str.search_forward and_reg str offset) with e -> -1) in
       let and_idx2 = (try (Str.search_forward and_reg str offset2) with e ->  -1) in
-      let like_idx = (try (Str.search_forward like_reg str offset3) with e -> -1) in
+      let like_idx1 = (try (Str.search_forward like_reg str offset3) with e -> -1) in
       let like_idx2 = (try (Str.search_forward like_reg str offset2) with e -> -1) in
-      if (or_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)
+      let or_exist = (or_idx1 <> -1 || or_idx2 <> -1) in 
+      let and_exist = (and_idx1 <> -1 || and_idx2 <> -1) in
+      let like_exist = (like_idx1 <> -1 || like_idx2 <> -1) in
+      if (or_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3 && or_exist)
       then
         (Or (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)|> parse_bool, bool))
-      else if (or_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1)
+      else if (or_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 && or_exist)
       then
         let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+3 in
         (Or (bool ,String.sub str (offset) ((String.length str)-offset) |> parse_bool))
-      else if (and_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)
+      else if (and_idx1 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3 && and_exist)
       then
         (And (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-3)|> parse_bool, bool))
-      else if (and_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1)
+      else if (and_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 && and_exist)
       then
         let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+3 in
         (And (bool ,String.sub str (offset) ((String.length str)-offset) |> parse_bool))
-      else if (like_idx == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2)
+      else if (like_idx1 == ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2) && like_exist)
       then 
         (Like (String.trim (String.sub str 0 ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)-2)), String.trim (sub)))
-      else if (like_idx2 == (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub) +1)
+      else if (like_idx2 == ((try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub) +1) && like_exist)
       then let offset = (try (Str.search_forward (Str.regexp sub) str 0) with Not_found -> -1)+(String.length sub)+1 in
         (Like (String.trim (sub), String.trim (String.sub str 0 (offset))))
       else bool
@@ -422,7 +412,7 @@ and parse_bool str : cypr_bool =
 
 (** parse_insert ASSUMES string passed in is of the form: "insert(__) (__) (__)
     or insert (__) (__)" *)
-let parse_insert  str :  expression option = 
+and parse_insert  str :  expression option = 
   let params = str |> func_param in
   let str_pair = params |> next_paren_contained_string in
   let expr = 
@@ -454,7 +444,7 @@ let parse_insert  str :  expression option =
             |None -> failwith "malformed" 
             |Some s -> s))
 
-let parse_delete  str :  expression option = 
+and parse_delete  str :  expression option = 
   let params = str |> func_param in
   let str_pair = params |> next_paren_contained_string in
   let expr = 
