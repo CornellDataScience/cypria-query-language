@@ -1,4 +1,3 @@
-<?php header('Access-Control-Allow-Origin: *'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -14,12 +13,10 @@
   <link rel="stylesheet" type="text/css" href="css/index.css">
   <!-- Scripts -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://unpkg.com/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
   <script type="text/javascript" src="scripts/main.js"></script>
   <!-- Fonts -->
-  <link rel="stylesheet" type="text/css" href="fonts/roboto-normal.css">
-  <link rel="stylesheet" type="text/css" href="fonts/roboto-light.css">
-  <link rel="stylesheet" type="text/css" href="fonts/roboto-bold.css">
+  <link rel="stylesheet" type="text/css" href="fonts/roboto.css">
+  <link rel="stylesheet" type="text/css" href="fonts/montserrat.css">
   <!-- Keywords, names, properties go here later -->
 </head>
 
@@ -43,7 +40,7 @@
           <span>functional</span> constructs.
         </div>
         <div id="intro-image"></div>
-        <div id="intro-download">Download Cypria (coming soon)</div>
+        <div id="intro-download">Download Cypria</div>
       </div>
       <div class="playground section">
         <h1>Try Cypria</h1>
@@ -57,36 +54,11 @@
       </div>
       <div class="links section">
         <h1>Documentation & links</h1>
-        <ul>
-          <li>
-            <a href="https://github.com/CornellDataScience/cypria-query-language/blob/master/cypria_planning/language_spec.md">
-              Cypria documentation
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/CornellDataScience/cypria-query-language">
-              GitHub repository
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/CornellDataScience/cypria-query-language">
-              Foo
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/CornellDataScience/cypria-query-language">
-              Bar
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/CornellDataScience/cypria-query-language">
-              Baz
-            </a>
-          </li>
-        </ul>
+        <?php include("includes/links.php") ?>
       </div>
       <div class="other section">
-        <h1>Reserved space</h1>
+        <h1>News</h1>
+        <?php include("includes/news.php") ?>
       </div>
     </div>
 

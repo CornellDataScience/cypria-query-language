@@ -61,6 +61,7 @@
 }
 
 #intro-download {
+  font-weight: 400;
   display: block;
   background-color: rgb(253, 192, 222);
   border-radius: 5px;
@@ -177,13 +178,13 @@
 
 .other {
   grid-area: other;
-  align-self: center;
+  align-self: start;
   justify-self: center;
 }
 
 .other h1 {
   font-size: 24px;
-  text-align: center;
+  text-align: start;
 }
 
 /* Screens smaller than 750px */
@@ -218,6 +219,9 @@
   }
   #code-output>pre {
     font-size: 16px;
+  }
+  .links {
+    padding: 0;
   }
   footer {
     height: auto;

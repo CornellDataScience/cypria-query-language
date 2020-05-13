@@ -1,0 +1,55 @@
+@charset "utf-8";
+/**-----------------------------------------------------------
+ * name: banner.css
+ * purpose: css styles for the playground banner
+ * author: david kim
+ * Licensed by Cornell Data Science. 
+ * https://cornelldata.science
+ -----------------------------------------------------------*/
+
+nav {
+  height: 80px;
+  width: 100%;
+  background-color: #2a3852;
+  letter-spacing: 0.1em;
+  font-weight: 300;
+  display: grid;
+  grid-template-columns: 300px auto;
+}
+
+/* Needed to make sure links don't purple out */
+
+nav a {
+  color: inherit;
+}
+
+/* Logo on the top left corner */
+
+#logo {
+  grid-column: 1 / span 1;
+  justify-self: start;
+  align-self: center;
+  cursor: pointer;
+  height: 80px;
+  line-height: 80px;
+  margin-left: 40px;
+}
+
+#logo h1 {
+  font-family: "Avenir";
+  font-weight: 500;
+  color: rgb(255, 245, 238);
+  font-size: 24px;
+}
+
+#run-button {}
+
+/* Screens smaller than 750px */
+
+@media only screen and (max-width: 750px) {
+  nav {
+    overflow: hidden;
+    height: 80px;
+    grid-template-columns: 1fr 1fr;
+  }
+}
