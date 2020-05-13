@@ -14,16 +14,16 @@ let rec string_of_ast expr =
   | Insert (vals, cols, expr) -> begin
       match cols with
       | None -> 
-        "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
+        "insert (" ^ expr ^ ") (" ^ (string_of_cypr_attr_list vals)
         ^ ")"
       | Some c -> 
-        "insert (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_attr_list vals)
+        "insert (" ^ expr ^ ") (" ^ (string_of_cypr_attr_list vals)
         ^ ") (" ^ string_of_cypr_attr_list c ^ ")"
     end
   | Delete (bools, expr) ->
     (match bools with 
-     | None -> "delete (" ^ (string_of_ast expr) ^ ")"
-     | Some b -> "delete (" ^ (string_of_ast expr) ^ ") (" ^ (string_of_cypr_bool b) ^ ")")
+     | None -> "delete (" ^ expr ^ ")"
+     | Some b -> "delete (" ^ expr ^ ") (" ^ (string_of_cypr_bool b) ^ ")")
   | Filter_Min (lst, attr, expr) ->
     "filter_min (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
     (string_of_ast expr)^ ")"

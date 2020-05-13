@@ -8,8 +8,8 @@ type expression =
   | SQLTable of string
   | Filter of cypr_bool * expression
   | Map of map_configuration * expression
-  | Insert of attribute_list * attribute_list option * expression
-  | Delete of cypr_bool option * expression
+  | Insert of attribute_list * attribute_list option * string
+  | Delete of cypr_bool option * string
   | Filter_Min of attribute_list * string * expression
   | Filter_Max of attribute_list * string * expression
   | Let of id * expression * expression
