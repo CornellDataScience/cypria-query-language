@@ -10,7 +10,7 @@
 nav {
   height: 80px;
   width: 100%;
-  background-color: #2a3852;
+  background-color: #524d9b;
   letter-spacing: 0.1em;
   font-weight: 300;
   display: grid;
@@ -42,7 +42,23 @@ nav a {
   font-size: 24px;
 }
 
-#run-button {}
+#run-code-button {
+  grid-column: 2 / span 1;
+  justify-self: end;
+  align-self: center;
+  margin-right: 40px;
+}
+
+#run-button {
+  height: 50px;
+  width: 100px;
+  border-radius: 3px;
+}
+
+#run-button h1 {
+  text-align: center;
+  color: black;
+}
 
 /* Screens smaller than 750px */
 
