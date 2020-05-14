@@ -1,0 +1,81 @@
+@charset "utf-8";
+/**-----------------------------------------------------------
+ * name: playground.css
+ * purpose: styles for the playground
+ * author: david kim
+ * Licensed by Cornell Data Science. 
+ * https://cornelldata.science
+ -----------------------------------------------------------*/
+
+.main-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 250px;
+  grid-template-areas: "input" "output";
+}
+
+#code-box {
+  grid-area: input;
+  width: 100%;
+  height: 100%;
+  background-color: #172935;
+  color: #ffbb3c;
+  overflow: hidden;
+}
+
+#row-numbers {
+  float: left;
+  width: 3%;
+  font-family: "Courier";
+  font-size: 110%;
+  text-align: right;
+  color: #ac8693;
+}
+
+#code-box>textarea {
+  float: right;
+  width: 97%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  color: #ffbb3c;
+  background-color: #172935;
+  font-family: "Courier";
+  font-size: 120%;
+  line-height: 128.3%;
+  padding-left: 10px;
+  overflow-y: scroll;
+}
+
+#code-output {
+  grid-area: output;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: #f7f9fa;
+  color: #202224;
+  overflow: auto;
+}
+
+#code-output>pre {
+  width: 100%;
+  height: 100%;
+  white-space: pre-wrap;
+  /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;
+  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;
+  /* Opera 4-6 */
+  white-space: -o-pre-wrap;
+  /* Opera 7 */
+  word-wrap: break-word;
+  /* Internet Explorer 5.5+ */
+  border: none;
+  outline: none;
+  resize: none;
+  background-color: inherit;
+  color: inherit;
+  padding: 0.825rem;
+  font-size: 140%;
+}

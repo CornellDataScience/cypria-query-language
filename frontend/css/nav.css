@@ -54,8 +54,8 @@ nav a {
   margin-right: 40px;
   /* Each item is part of the subgrid */
   display: grid;
-  grid-template-columns: 80px 80px 80px;
-  column-gap: 10px;
+  grid-template-columns: 150px minmax(80px, 1fr) minmax(80px, 1fr) minmax(80px, 1fr);
+  column-gap: 15px;
 }
 
 .nav-toggle {
@@ -112,6 +112,9 @@ nav a {
   }
   #nav-item3 {
     top: 240px;
+  }
+  #nav-item4 {
+    top: 320px;
   }
   .nav-toggle {
     display: block;

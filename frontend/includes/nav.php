@@ -18,15 +18,20 @@
   </div>
   <div class="item" id="nav-item1">
     <h1>
-      <a href="https://github.com/CornellDataScience/cypria-query-language/blob/master/cypria_planning/language_spec.md" target="_blank">Doc</a>
+      <a href="playground.php">Playground</a>
     </h1>
   </div>
   <div class="item" id="nav-item2">
     <h1>
-      <a href="https://github.com/CornellDataScience/cypria-query-language" target="_blank">Repo</a>
+      <a href="https://github.com/CornellDataScience/cypria-query-language/blob/master/cypria_planning/language_spec.md" target="_blank">Doc</a>
     </h1>
   </div>
   <div class="item" id="nav-item3">
+    <h1>
+      <a href="https://github.com/CornellDataScience/cypria-query-language" target="_blank">Repo</a>
+    </h1>
+  </div>
+  <div class="item" id="nav-item4">
     <h1>
       <a href="https://cornelldata.science" target="_blank">CDS</a>
     </h1>
