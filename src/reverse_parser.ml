@@ -11,6 +11,23 @@ let rec string_of_ast expr =
     "filter (" ^ (string_of_cypr_bool b) ^ ") (" ^ (string_of_ast expr) ^ ")"
   | Map (mc, expr) ->
     "map (" ^ (string_of_map_config mc) ^ ") (" ^ (string_of_ast expr) ^ ")"
+  | Filter_min (lst, attr, expr) ->
+    "filter_min (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
+    (string_of_ast expr)^ ")"
+  | Filter_max (lst, attr, expr) ->
+    "filter_max (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
+    (string_of_ast expr)^ ")"
+  | Var x -> x 
+  | Let (x, e1, e2) -> "let " ^ "x = " ^ (string_of_ast e1) ^ " in " ^ (string_of_ast e2)
+  | CountInst (col, expr) -> 
+    "count (" ^ (string_of_attribute_list col) ^ ") (" ^ string_of_ast expr ^ ")"
+  | Join (cond, expr1, expr2) -> 
+    "join (" ^ (string_of_cypr_bool cond) ^ ") (" ^ string_of_ast expr1 ^ ") (" ^
+    (string_of_ast expr2) ^ ")"
+  | Do_return (side_e, expr) -> 
+    "do (" ^ (string_of_side_effect side_e) ^ ") (" ^ (string_of_ast expr) ^ ")"
+
+and string_of_side_effect = function 
   | Insert (vals, cols, expr) -> begin
       match cols with
       | None -> 
@@ -24,19 +41,10 @@ let rec string_of_ast expr =
     (match bools with 
      | None -> "delete (" ^ expr ^ ")"
      | Some b -> "delete (" ^ expr ^ ") (" ^ (string_of_cypr_bool b) ^ ")")
-  | Filter_Min (lst, attr, expr) ->
-    "filter_min (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
-    (string_of_ast expr)^ ")"
-  | Filter_Max (lst, attr, expr) ->
-    "filter_max (" ^ (string_of_attribute_list lst) ^ ") (" ^ (attr) ^ ") (" ^
-    (string_of_ast expr)^ ")"
-  | Var x -> x 
-  | Let (x, e1, e2) -> "let " ^ "x = " ^ (string_of_ast e1) ^ " in " ^ (string_of_ast e2)
-  | CountInst (col, expr) -> 
-    "count (" ^ (string_of_attribute_list col) ^ ") (" ^ string_of_ast expr ^ ")"
-  | Join (cond, expr1, expr2) -> 
-    "join (" ^ (string_of_cypr_bool cond) ^ ") (" ^ string_of_ast expr1 ^ ") (" ^
-    (string_of_ast expr2) ^ ")"
+  | Ignore (expr) -> 
+    "ignore (" ^ string_of_ast expr ^")"
+  | Assign (alias, expr) -> 
+    "assign " ^ alias ^ " := " ^ string_of_ast expr 
 
 and string_of_cypr_bool = function 
   | SQLBool s -> s 

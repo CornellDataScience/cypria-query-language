@@ -24,6 +24,7 @@ let execute_input () : unit =
   with 
   | ParseError e -> Printf.printf "Parsing error: %s" e
   | Interpreter.TypeError e -> Printf.printf "Typing error: %s" e
+  | Invalid_argument s -> Printf.printf "Parsing issue, likely malformed boolean or unmatched paren. %s" s
 
 let _ = execute_input ()
 

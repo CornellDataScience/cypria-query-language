@@ -14,23 +14,19 @@ let rec eval expr env : sql_string =
       -> "SELECT * FROM (" ^ eval expr env ^ ") WHERE (" 
          ^ eval_bool filter_condition env ^ ")"
     | Map (map_config, expr) -> eval_map map_config expr env
-    | Insert (vals, cols, expr) -> begin
-        match cols with
-        | None ->
-          "INSERT INTO " ^ expr ^ "\nVALUES (" ^ string_of_attribute_list vals ^ ")"
-        | Some c -> 
-          "INSERT INTO " ^ expr ^ " (" ^ string_of_attribute_list c
-          ^ ")\nVALUES (" ^ string_of_attribute_list vals ^ ")"
+    | Do_return (side_effect, expr) -> 
+      begin
+        match side_effect with 
+        | Ignore _ -> eval expr env 
+        | _ ->  
+          let sql_str_1 = eval_side_effect side_effect env in 
+          let sql_str_2 = eval expr env in 
+          sql_str_1 ^ "; " ^ sql_str_2
       end
-    | Delete (b_opt, expr) ->
-      (match b_opt with
-       | None -> "DELETE FROM " ^ expr
-       | Some c -> "DELETE FROM " ^ expr ^ " WHERE " 
-                   ^ (eval_bool c env))
-    | Filter_Min (attr_lst, attr, expr) 
+    | Filter_min (attr_lst, attr, expr) 
       -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", min(" ^ attr 
          ^ ") as " ^ attr ^ " \nFROM (" ^ (eval expr env) ^ ")"
-    | Filter_Max (attr_lst, attr, expr) 
+    | Filter_max (attr_lst, attr, expr) 
       -> "SELECT " ^ (string_of_attribute_list attr_lst) ^ ", max(" ^ attr 
          ^ ") as " ^ attr ^ " \nFROM (" ^ (eval expr env) ^ ")"
     | Var s -> eval_var s env
@@ -49,6 +45,26 @@ let rec eval expr env : sql_string =
       "SELECT * FROM (" ^ (eval expr1 env) ^ ") JOIN " ^ (table_2_str) ^ 
       " ON (" ^ (eval_bool join_cond env) ^ ")"
   end 
+
+and eval_side_effect side_effect env = 
+  match side_effect with 
+  | Insert (vals, cols, expr) -> begin
+      match cols with
+      | None ->
+        "INSERT INTO " ^ expr ^ "\nVALUES (" ^ string_of_attribute_list vals ^ ")"
+      | Some c -> 
+        "INSERT INTO " ^ expr ^ " (" ^ string_of_attribute_list c
+        ^ ")\nVALUES (" ^ string_of_attribute_list vals ^ ")"
+    end
+  | Delete (b_opt, expr) ->
+    (match b_opt with
+     | None -> "DELETE FROM " ^ expr
+     | Some c -> "DELETE FROM " ^ expr ^ " WHERE " 
+                 ^ (eval_bool c env))
+  | Assign (alias, e1) -> 
+    let sql_sub_expr = eval e1 env in 
+    "CREATE TABLE " ^ alias ^ " AS " ^ sql_sub_expr 
+  | Ignore (expr) -> ""
 
 and assert_SQLTable (expr) = 
   match expr with 

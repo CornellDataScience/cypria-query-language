@@ -14,13 +14,17 @@ let keywords = [
   "has_rows"; 
   "contains"; 
   "project_cols"; 
-  "insert"; 
-  "delete"; 
   "let";
   "count_instances";
   "join";
   "filter_max";
-  "filter_min"
+  "filter_min";
+  "do"
+]
+
+let side_effect_keywords = [
+  "insert"; 
+  "delete"; 
 ]
 
 let infix_keywords = ["&&"]
@@ -123,6 +127,12 @@ let next_prefix_keyword str : string * string =
   match String.split_on_char ' ' str with 
   | [] -> ("", "")
   | word::t when List.mem word keywords -> (word, string_join " " t)
+  | word::t -> ("", str)
+
+let next_side_effect_keyword str : string * string = 
+  match String.split_on_char ' ' str with 
+  | [] -> ("", "")
+  | word::t when List.mem word side_effect_keywords -> (word, string_join " " t)
   | word::t -> ("", str)
 
 (** [str_to_lst s] converts a pseudo-list of strings delimited by [,] (commas) 
@@ -241,14 +251,25 @@ let rec parse_ast_from_string str : expression option =
   | ("", str) -> if is_capitalized str then Some (SQLTable str) else Some (Var str)
   | (keyword, rest) when keyword = "filter" -> parse_filter str
   | (keyword, rest) when keyword = "map" -> parse_map str
-  | (keyword, rest) when keyword = "insert" -> parse_insert str
-  | (keyword, rest) when keyword = "delete" -> parse_delete str
   | (keyword, rest) when keyword = "let" -> parse_let str 
   | (keyword, rest) when keyword = "count_instances" -> parse_count_instances str
   | (keyword, rest) when keyword = "join" -> parse_join str
   | (keyword, rest) when keyword = "filter_max" -> parse_filter_minmax str true
   | (keyword, rest) when keyword = "filter_min" -> parse_filter_minmax str false
+  | (keyword, rest) when keyword = "do" -> parse_do_return str
   | (keyword, rest) -> raise (ParseError "Expected top-level keyword token")
+
+and parse_side_effect str : side_effect option = 
+  match next_side_effect_keyword str with 
+  | (keyword, rest) when keyword = "insert" -> parse_insert str 
+  | (keyword, rest) when keyword = "delete" -> parse_delete str
+  | (keyword, rest) when keyword = "assign" -> parse_assign str 
+  | _ -> raise (ParseError "Expected top-level side effect token")
+
+and assert_parse_side_effect str : side_effect = 
+  match parse_side_effect str with 
+  | Some (side_e) -> side_e 
+  | None -> raise (ParseError ("Error in: " ^ str))
 
 and assert_parse_ast_from_string str = 
   match parse_ast_from_string str with 
@@ -322,6 +343,45 @@ and parse_let str =
         end
     end 
   | _ -> raise (ParseError "Expected token: let") 
+
+(** Expects [str] of form 'assign <alias> := <expr>' *)
+and parse_assign str =
+  match next_side_effect_keyword str with 
+  | (keyword, rest) when keyword = "assign" -> 
+    begin
+      match String.split_on_char ' ' str with 
+      | "assign"::alias::":="::tl -> 
+        let rest = string_join " " tl in 
+        let sub_expr = assert_parse_ast_from_string rest in 
+        Some (Assign(alias, sub_expr))
+      | _ -> raise (ParseError ("Malformed assign, expected alias and token ':=' :" ^ str)) 
+    end
+  | _ -> raise (ParseError "Expected token: assign")
+
+(** Expects [str] of form 'do (<unit>) return (<exp>)' *)
+and parse_do_return str = 
+  match next_prefix_keyword str with 
+  | (keyword, rest) when keyword = "do" ->
+    begin
+      match next_paren_contained_string rest with
+      | (side_str, rest) -> 
+        if side_str = "" 
+        then raise (ParseError ("Malformed do return: " ^ str))
+        else 
+          let side_effect =  assert_parse_side_effect side_str in 
+          match String.trim rest |> String.split_on_char ' ' with 
+          | "return"::tl -> 
+            begin 
+              let sub_expr = parse_ast_from_string (next_paren_contained_string rest 
+                                                    |> fun (str, rest) -> str) in
+              match sub_expr with 
+              | Some sub_expr ->
+                Some (Do_return (side_effect, sub_expr))
+              | None -> raise (ParseError ("Error in: " ^ rest))
+            end
+          | _ -> raise (ParseError ("Malformed do return, expected return: " ^ str))
+    end 
+  | _ -> raise (ParseError "Expected token: do") 
 
 and parse_filter str : expression option = 
   match next_prefix_keyword str with 
@@ -485,7 +545,7 @@ and parse_bool str : cypr_bool =
 
 (** parse_insert ASSUMES string passed in is of the form: "insert(__) (__) (__)
     or insert (__) (__)" *)
-and parse_insert  str :  expression option = 
+and parse_insert  str :  side_effect option = 
   (*let params = str |> func_param in*)
   let str_pair = str |> next_paren_contained_string in
   let expr = 
@@ -517,7 +577,7 @@ and parse_insert  str :  expression option =
    |None -> failwith "malformed" 
    |Some s -> s))*)
 
-and parse_delete  str :  expression option = 
+and parse_delete  str :  side_effect option = 
   let params = str |> func_param in
   let str_pair = params |> next_paren_contained_string in
   let expr = 
@@ -569,16 +629,16 @@ and parse_filter_minmax  str is_max :  expression option =
   if(is_max)
   then
     Some (
-      Filter_Max((str_to_lst lst), 
+      Filter_max((str_to_lst lst), 
                  attr, match (parse_ast_from_string expr) with
-        | None -> failwith "malformed"
+        | None -> raise (ParseError ("Malformed filter_max."))  
         | Some s -> s
                 ))
   else 
     Some (
-      Filter_Min((str_to_lst lst), 
+      Filter_min((str_to_lst lst), 
                  attr, match (parse_ast_from_string expr) with
-        | None -> failwith "malformed"
+        | None -> raise (ParseError ("Malformed filter_min."))  
         | Some s -> s
                 ))
 
