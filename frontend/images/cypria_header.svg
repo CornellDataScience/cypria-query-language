@@ -15,7 +15,10 @@
    viewBox="0 0 96.7 28.700004"
    xml:space="preserve"
    sodipodi:docname="cypria_header.svg"
-   inkscape:version="1.0 (4035a4f, 2020-05-01)"><svg:metadata
+   inkscape:version="1.0 (4035a4f, 2020-05-01)">
+      <link xmlns="http://www.w3.org/1999/xhtml" rel="stylesheet" href="../fonts/raleway.css" type="text/css"/>
+
+   <svg:metadata
    id="metadata178"><rdf:RDF><cc:Work
        rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
          rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></svg:metadata><svg:defs
@@ -86,7 +89,7 @@
      id="tspan188"
      x="5.1041121"
      y="22.230024"
-     style="font-style:normal;font-variant:normal;font-weight:800;font-stretch:normal;font-size:26.6667px;font-family:Avenir;-inkscape-font-specification:'Avenir Ultra-Bold';fill:#4e0000;fill-opacity:1">Cypria</svg:tspan></svg:text><svg:text
+     style="font-style:normal;font-variant:normal;font-weight:800;font-stretch:normal;font-size:26.6667px;font-family:Raleway;-inkscape-font-specification:'Raleway Medium';fill:#4e0000;fill-opacity:1">Cypria</svg:tspan></svg:text><svg:text
    xml:space="preserve"
    id="text1071"
    style="font-size:32px;line-height:1.25;font-family:AppleGothic;-inkscape-font-specification:AppleGothic;white-space:pre;shape-inside:url(#rect1073);" /></svg:svg>

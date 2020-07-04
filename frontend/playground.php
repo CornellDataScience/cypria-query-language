@@ -26,6 +26,7 @@ function generate_rows($num)
   <!-- Fonts -->
   <link rel="stylesheet" type="text/css" href="fonts/roboto.css">
   <link rel="stylesheet" type="text/css" href="fonts/montserrat.css">
+  <link rel="stylesheet" type="text/css" href="fonts/raleway.css">
   <!-- Keywords, names, properties go here later -->
 </head>
 
