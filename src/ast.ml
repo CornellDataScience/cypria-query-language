@@ -2,6 +2,21 @@
 
 type id = Variable.t
 
+type cypria_type = 
+| TBool 
+| TTable
+
+type 'a typed = {_type : cypria_type; }
+
+(** Parse tree is an intermediate representation for Cypria created by the 
+    parser. The parse tree is parsed by the static analyzer for consistency 
+    and type-checking and converted into the [Ast : expression] *)
+type parse_tree = 
+  | PFun of parse_tree list
+  | PVar of id 
+  | PSQLTable of string 
+  | PCyprBool 
+  
 (** Expression is a top-level Cypria statement, which is of Cypria-type 'table'. *)
 type expression = 
   (** A base-level SQL table. Like [SQLTable "RESERVES"]. *)

@@ -25,7 +25,7 @@ let rec string_of_ast expr =
     "join (" ^ (string_of_cypr_bool cond) ^ ") (" ^ string_of_ast expr1 ^ ") (" ^
     (string_of_ast expr2) ^ ")"
   | Do_return (side_e, expr) -> 
-    "do (" ^ (string_of_side_effect side_e) ^ ") (" ^ (string_of_ast expr) ^ ")"
+    "do (" ^ (string_of_side_effect side_e) ^ ") return (" ^ (string_of_ast expr) ^ ")"
 
 and string_of_side_effect = function 
   | Insert (vals, cols, expr) -> begin
