@@ -14,6 +14,7 @@ let execute_program_on_stdout str : unit=
 (** Reads a single newline terminated cypria program from stdin. 
     Writes newline tarminated SQL output or error to stdout. *)
 let execute_input () : unit = 
+  Printf.printf "enter Cypria>";
   let prog = read_line () in 
   try 
     match Parser.parse_ast_from_string prog with 

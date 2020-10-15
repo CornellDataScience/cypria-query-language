@@ -3,20 +3,38 @@
 type id = Variable.t
 
 type cypria_type = 
-| TBool 
-| TTable
+  | TBool 
+  | TTable
+  | TFun of cypria_type * cypria_type
+  | TTuple
+  | TAttributeList 
+  | TMapConfig
+  | TUnit
 
-type 'a typed = {_type : cypria_type; }
+type 'a typed = 'a * cypria_type
 
 (** Parse tree is an intermediate representation for Cypria created by the 
     parser. The parse tree is parsed by the static analyzer for consistency 
     and type-checking and converted into the [Ast : expression] *)
 type parse_tree = 
-  | PFun of parse_tree list
-  | PVar of id 
-  | PSQLTable of string 
-  | PCyprBool 
-  
+  | PApp of (parse_tree * parse_tree) typed
+  | PVar of id
+  | PSQLTable of string typed
+  | PSQLBool of string typed
+  | PAnd of (parse_tree * parse_tree) typed
+  | POr of (parse_tree * parse_tree) typed
+  | PNot of parse_tree typed
+  | PTuple of (string list) typed
+  | PAttributeList of (string list) typed
+  | PBuiltIn of string typed
+  | PLet of id typed * parse_tree * parse_tree
+  | PDoReturn of parse_tree * parse_tree
+
+(** map (project_cols [name]) (Sailors) *)
+(** PApp (map (project_cols [name])), (Sailors) *)
+(** PApp (PApp (map, project_cols [name]), (Sailors) *)
+(** PApp (PApp (PBuiltIn ({_type: TFun(TMapConfig, TFun(Table, Table))))}), project_cols [name]), (Sailors) *)
+(* let x = PApp (PApp (PBuiltIn {_type: })) *)
 (** Expression is a top-level Cypria statement, which is of Cypria-type 'table'. *)
 type expression = 
   (** A base-level SQL table. Like [SQLTable "RESERVES"]. *)

@@ -1,4 +1,4 @@
-UNITS=interpreter reverse_parser parser variable 
+UNITS=interpreter reverse_parser parser variable static_analyzer
 MLS_WITHOUT_MLIS=ast main
 MLS=$(UNITS:=.ml) $(MLS_WITHOUT_MLIS:=.ml)
 OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo) 
