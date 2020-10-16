@@ -26,9 +26,10 @@ type parse_tree =
   | PNot of parse_tree typed
   | PTuple of (string list) typed
   | PAttributeList of (string list) typed
-  | PBuiltIn of string typed
   | PLet of id typed * parse_tree * parse_tree
   | PDoReturn of parse_tree * parse_tree
+
+let _ = PAttributeList ((["name"; "dob"; "major"]), TAttributeList)
 
 (** map (project_cols [name]) (Sailors) *)
 (** PApp (map (project_cols [name])), (Sailors) *)

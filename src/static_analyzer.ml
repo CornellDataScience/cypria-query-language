@@ -27,7 +27,22 @@ let expected_found expected found : string =
 let typeof (typed_parse_argument : 'a typed): cypria_type = 
   snd typed_parse_argument
 
-let rec typecheck  
+let rec typeof_parse_tree 
+    (p_tree : parse_tree) 
+    (ctx : typ_context) : (cypria_type, static_error) result = 
+  match p_tree with 
+  | PSQLTable (table, typ) -> begin 
+      if typ = TTable 
+      then Ok (TTable) 
+      else Error (TypeError (expected_found TTable typ))
+    end
+  (* let (id: id_type) = e1 in e2 *)
+  | PLet ((id, id_typ), e_1, e_2) -> 
+    (* TODO: qx27 *)
+    Error (TypeError "Unimplemented. Will call typecheck")
+  | _ -> Error (TypeError "Unimplemented")
+
+and typecheck  
     (p_tree : parse_tree) 
     (ctx : typ_context): (parse_tree, static_error) result = 
   match p_tree with 
@@ -36,4 +51,11 @@ let rec typecheck
       then Ok (p_tree) 
       else Error (TypeError (expected_found TTable typ))
     end
+  (* let (id: id_type) = e1 in e2 *)
+  | PLet ((id, id_typ), e_1, e_2) -> 
+    (* TODO: qx27 *)
+    Error (TypeError "Unimplemented")
   | _ -> Error (TypeError "Unimplemented")
+
+
+
