@@ -29,3 +29,8 @@ typ :=
 | map_config
 | unit
 ```
+
+Build .mll and .mly
+.mll defines tokens
+.mly defines grammer with tokens
+parser.ml runs them
