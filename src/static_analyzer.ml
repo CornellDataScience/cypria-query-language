@@ -19,6 +19,7 @@ let rec string_of_typ (typ : cypria_type) : string =
   | TMapConfig -> "map_config"
   | TUnit -> "unit"
   | TFun (typ1, typ2) -> (string_of_typ typ1) ^ " -> " ^ (string_of_typ typ2)
+  | TAlpha -> "unknown_type"
 
 let expected_found expected found : string = 
   "Expected type: " ^ (string_of_typ expected) ^ 
@@ -36,6 +37,18 @@ let rec typeof_parse_tree
       then Ok (TTable) 
       else Error (TypeError (expected_found TTable typ))
     end
+  | PApp (fun_arg, _) -> begin 
+      match typecheck p_tree ctx with 
+      | Ok _ -> begin 
+          match typeof_parse_tree fun_arg ctx with 
+          | Ok (TFun (_, b)) -> Ok b 
+          | Error e -> Error e
+          | Ok unexpected_typ -> 
+            let err_msg = expected_found (TFun (TAlpha, TAlpha)) unexpected_typ 
+            in Error (TypeError err_msg)
+        end
+      | Error e -> Error e
+    end
   (* let (id: id_type) = e1 in e2 *)
   | PLet ((id, id_typ), e_1, e_2) -> 
     (* TODO: qx27 *)
@@ -51,11 +64,29 @@ and typecheck
       then Ok (p_tree) 
       else Error (TypeError (expected_found TTable typ))
     end
+  | PApp (fun_tree, arg_tree) -> 
+    typecheck_application (fun_tree, arg_tree) ctx
   (* let (id: id_type) = e1 in e2 *)
   | PLet ((id, id_typ), e_1, e_2) -> 
     (* TODO: qx27 *)
     Error (TypeError "Unimplemented")
   | _ -> Error (TypeError "Unimplemented")
+
+and typ_equals typ1 typ2 = typ1 = typ2 
+
+and typecheck_application 
+    (fun_tree, arg_tree)
+    ctx : (parse_tree, static_error) result = 
+  match typeof_parse_tree fun_tree ctx with 
+  | Ok (TFun (a, _)) -> begin 
+      match typeof_parse_tree arg_tree ctx with 
+      | Ok arg_typ when typ_equals arg_typ a -> Ok (PApp ((fun_tree, arg_tree))) 
+      | Ok unexpected_typ -> Error (TypeError (expected_found a unexpected_typ))
+      | Error e -> Error e
+    end 
+  | Error e -> Error e
+  | Ok typ -> let err_msg = expected_found (TFun (TAlpha, TAlpha)) typ in 
+    Error (TypeError err_msg)
 
 
 

@@ -10,6 +10,7 @@ type cypria_type =
   | TAttributeList 
   | TMapConfig
   | TUnit
+  | TAlpha 
 
 type 'a typed = 'a * cypria_type
 
@@ -17,7 +18,7 @@ type 'a typed = 'a * cypria_type
     parser. The parse tree is parsed by the static analyzer for consistency 
     and type-checking and converted into the [Ast : expression] *)
 type parse_tree = 
-  | PApp of (parse_tree * parse_tree) typed
+  | PApp of (parse_tree * parse_tree)
   | PVar of id
   | PSQLTable of string typed
   | PSQLBool of string typed
@@ -30,6 +31,7 @@ type parse_tree =
   | PDoReturn of parse_tree * parse_tree
 
 let _ = PAttributeList ((["name"; "dob"; "major"]), TAttributeList)
+
 
 (** map (project_cols [name]) (Sailors) *)
 (** PApp (map (project_cols [name])), (Sailors) *)
