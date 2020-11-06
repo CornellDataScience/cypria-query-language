@@ -37,6 +37,11 @@ let rec typeof_parse_tree
       then Ok (TTable) 
       else Error (TypeError (expected_found TTable typ))
     end
+  | PSQLBool (_, typ) -> begin 
+      match typecheck p_tree ctx with 
+      | Ok parse_tree -> Ok typ
+      | Error e -> Error e 
+    end
   | PApp (fun_arg, _) -> begin 
       match typecheck p_tree ctx with 
       | Ok _ -> begin 
@@ -64,6 +69,13 @@ and typecheck
       then Ok (p_tree) 
       else Error (TypeError (expected_found TTable typ))
     end
+  | PSQLBool (str, typ) -> begin 
+      if typ = TBool 
+      then Ok (p_tree)
+      else Error(TypeError (expected_found TBool typ))
+    end
+  | PAnd (left, right) | POr (left, right) -> 
+    typecheck_binary_bool left right p_tree ctx 
   | PApp (fun_tree, arg_tree) -> 
     typecheck_application (fun_tree, arg_tree) ctx
   (* let (id: id_type) = e1 in e2 *)
@@ -88,5 +100,17 @@ and typecheck_application
   | Ok typ -> let err_msg = expected_found (TFun (TAlpha, TAlpha)) typ in 
     Error (TypeError err_msg)
 
+and typecheck_binary_bool 
+    (left : parse_tree) 
+    (right: parse_tree) 
+    (full_p_tree) ctx : (parse_tree, static_error) result =
+  match (typeof_parse_tree left ctx, typeof_parse_tree right ctx) with 
+  | (Ok (TBool), Ok (TBool)) -> Ok (full_p_tree)
+  | (Ok l_typ, Ok _) when l_typ <> TBool -> 
+    Error (TypeError (expected_found TBool l_typ))
+  | (Ok TBool, Ok r_typ) -> Error (TypeError (expected_found TBool r_typ))
+  | (Error e, _) -> Error e 
+  | (Ok _, Error e) -> Error e
+  | (Ok l_typ, Ok r_typ) -> Error (TypeError (expected_found TBool l_typ))
 
 

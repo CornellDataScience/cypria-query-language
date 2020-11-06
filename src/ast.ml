@@ -22,9 +22,10 @@ type parse_tree =
   | PVar of id
   | PSQLTable of string typed
   | PSQLBool of string typed
-  | PAnd of (parse_tree * parse_tree) typed
-  | POr of (parse_tree * parse_tree) typed
-  | PNot of parse_tree typed
+  | PAnd of (parse_tree * parse_tree)
+  | POr of (parse_tree * parse_tree)
+  | PEqual of (parse_tree * parse_tree)
+  | PNot of parse_tree
   | PTuple of (string list) typed
   | PAttributeList of (string list) typed
   | PLet of id typed * parse_tree * parse_tree
