@@ -104,8 +104,6 @@ rule token = parse
         { token lexbuf }
   | ['\n']
         { new_line lexbuf; token lexbuf }
-  | int_literal
-        { INT (Lexing.lexeme lexbuf) }
   | "("
         { LPAREN }
   | ")"
@@ -124,7 +122,8 @@ rule token = parse
         { OR }
   | "not"
         { NOT }
-
+  | "filter"
+        {FILTER}
   | eof
         { EOF }
   | _
