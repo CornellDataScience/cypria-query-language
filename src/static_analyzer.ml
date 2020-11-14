@@ -28,45 +28,58 @@ let expected_found expected found : string =
 let typeof (typed_parse_argument : 'a typed): cypria_type = 
   snd typed_parse_argument
 
+(** [typeof_parse_tree p_tree starting_ctx] is the Cypria type of the parse
+    tree [p_tree] and the full updated typing context 
+    under the correct starting typing context [starting_ctx], 
+    if [p_tree] typechecks under the starting context [starting_ctx].
+
+    If [p_tree] does not typecheck under the starting context [starting_ctx],
+    the result is an appropriate error.
+
+    @returns [(typ, ctx')] where 
+    [typ] is the [cypria_type] of [p_tree] and 
+    [ctx'] is the updated typing context with any new definitions from 
+    [p_tree]
+*)
 let rec typeof_parse_tree 
     (p_tree : parse_tree) 
-    (ctx : typ_context) : (cypria_type, static_error) result = 
+    (ctx : typ_context) : (cypria_type * typ_context, static_error) result = 
   match p_tree with 
   | PSQLTable (table, typ) -> begin 
       if typ = TTable 
-      then Ok (TTable) 
+      then Ok (TTable, ctx) 
       else Error (TypeError (expected_found TTable typ))
     end
   | PSQLBool (_, typ) -> begin 
       match typecheck p_tree ctx with 
-      | Ok parse_tree -> Ok typ
+      | Ok (parse_tree, ctx') -> Ok (typ, ctx')
       | Error e -> Error e 
     end
   | PAnd (_, _) | POr (_, _) | PEqual (_, _) | PNot _-> 
     begin
       match typecheck p_tree ctx with 
-      | Ok p_tree -> Ok TBool 
+      | Ok (p_tree, ctx') -> Ok (TBool, ctx') 
       | Error e -> Error e
     end
   | PTuple _ -> 
     begin
       match typecheck p_tree ctx with 
-      | Ok p_tree -> Ok TTuple 
+      | Ok (p_tree, ctx') -> Ok (TTuple, ctx')
       | Error e -> Error e
     end
   | PAttributeList _ -> 
     begin
       match typecheck p_tree ctx with 
-      | Ok p_tree -> Ok TAttributeList 
+      | Ok (p_tree, ctx') -> Ok (TAttributeList, ctx') 
       | Error e -> Error e
     end
   | PApp (fun_arg, _) -> begin 
       match typecheck p_tree ctx with 
-      | Ok _ -> begin 
+      | Ok (_, ctx') -> begin 
           match typeof_parse_tree fun_arg ctx with 
-          | Ok (TFun (_, b)) -> Ok b 
+          | Ok (TFun (_, b), ctx_fun_arg) -> Ok (b, ctx') 
           | Error e -> Error e
-          | Ok unexpected_typ -> 
+          | Ok (unexpected_typ, ctx) -> 
             let err_msg = expected_found (TFun (TAlpha, TAlpha)) unexpected_typ 
             in Error (TypeError err_msg)
         end
@@ -79,27 +92,41 @@ let rec typeof_parse_tree
   | PDoReturn (_, _) -> 
     begin
       match typecheck p_tree ctx with 
-      | Ok _ ->  Ok TTable 
+      | Ok (_, ctx') ->  Ok (TTable, ctx') 
       | Error e -> Error e
     end
   | _ -> Error (TypeError "Unimplemented")
 
+
+(** [typecheck p_tree starting_ctx] is the [parse_tree] [p_tree] 
+    and the full updated typing context 
+    under the correct starting typing context [starting_ctx], 
+    if p_tree typechecks under the starting context [starting_ctx] 
+
+    If [p_tree] does not typecheck under the starting context [starting_ctx],
+    the result is an appropriate error.
+
+    @returns [(typ, ctx')] where 
+    [p_tree] is the [parse_tree], [p_tree] and 
+    [ctx'] is the updated typing context with any new definitions from 
+    [p_tree]
+*)
 and typecheck  
     (p_tree : parse_tree) 
-    (ctx : typ_context): (parse_tree, static_error) result = 
+    (ctx : typ_context): (parse_tree * typ_context, static_error) result = 
   match p_tree with 
-  | PSQLTable (table, typ) -> naive_type_check typ TTable p_tree
-  | PSQLBool (str, typ) -> naive_type_check typ TBool p_tree
+  | PSQLTable (table, typ) -> naive_type_check typ TTable p_tree ctx
+  | PSQLBool (str, typ) -> naive_type_check typ TBool p_tree ctx
   | PAnd (left, right) | POr (left, right) | PEqual (left, right) -> 
     typecheck_binary_bool left right p_tree ctx 
   | PNot (sql_p_tree) -> begin 
       match typeof_parse_tree sql_p_tree ctx with 
-      | Ok TBool -> Ok p_tree
+      | Ok (TBool, _) -> Ok (p_tree, ctx)
       | Ok typ -> Error (TypeError (expected_found TBool typ))
       | Error e -> Error e
     end
-  | PTuple (_, typ) -> naive_type_check typ TTuple p_tree
-  | PAttributeList (_, typ) -> naive_type_check typ TAttributeList p_tree
+  | PTuple (_, typ) -> naive_type_check typ TTuple p_tree ctx
+  | PAttributeList (_, typ) -> naive_type_check typ TAttributeList p_tree ctx
   | PApp (fun_tree, arg_tree) -> 
     typecheck_application (fun_tree, arg_tree) ctx
   (* let (id: id_type) = e1 in e2 *)
@@ -112,18 +139,23 @@ and typecheck
 
 and typ_equals typ1 typ2 = typ1 = typ2 
 
-and naive_type_check typ expected_typ p_tree : (parse_tree, static_error) result = 
+and naive_type_check 
+    typ 
+    expected_typ 
+    p_tree 
+    ctx : (parse_tree * typ_context, static_error) result = 
   if typ_equals typ expected_typ 
-  then Ok (p_tree) 
+  then Ok (p_tree, ctx) 
   else Error (TypeError (expected_found expected_typ typ))
 
 and typecheck_application 
     (fun_tree, arg_tree)
-    ctx : (parse_tree, static_error) result = 
+    ctx : (parse_tree * typ_context, static_error) result = 
   match typeof_parse_tree fun_tree ctx with 
-  | Ok (TFun (a, _)) -> begin 
+  | Ok (TFun (a, _), _) -> begin 
       match typeof_parse_tree arg_tree ctx with 
-      | Ok arg_typ when typ_equals arg_typ a -> Ok (PApp ((fun_tree, arg_tree))) 
+      | Ok (arg_typ, _) when typ_equals arg_typ a -> 
+        Ok (PApp ((fun_tree, arg_tree)), ctx) 
       | Ok unexpected_typ -> Error (TypeError (expected_found a unexpected_typ))
       | Error e -> Error e
     end 
@@ -134,12 +166,12 @@ and typecheck_application
 and typecheck_binary_bool 
     (left : parse_tree) 
     (right: parse_tree) 
-    (full_p_tree) ctx : (parse_tree, static_error) result =
+    (full_p_tree) ctx : (parse_tree * typ_context, static_error) result =
   match (typeof_parse_tree left ctx, typeof_parse_tree right ctx) with 
-  | (Ok (TBool), Ok (TBool)) -> Ok (full_p_tree)
-  | (Ok l_typ, Ok _) when not (typ_equals l_typ TBool) -> 
+  | (Ok (TBool, _), Ok (TBool, _)) -> Ok (full_p_tree, ctx)
+  | (Ok (l_typ, _), Ok _) when not (typ_equals l_typ TBool) -> 
     Error (TypeError (expected_found TBool l_typ))
-  | (Ok TBool, Ok r_typ) -> Error (TypeError (expected_found TBool r_typ))
+  | (Ok (TBool, _), Ok (r_typ, _)) -> Error (TypeError (expected_found TBool r_typ))
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e
   | (Ok l_typ, Ok r_typ) -> Error (TypeError (expected_found TBool l_typ))
@@ -147,13 +179,16 @@ and typecheck_binary_bool
 and typecheck_do_return 
     (do_tree : parse_tree) 
     (return_tree: parse_tree) 
-    (full_p_tree) ctx : (parse_tree, static_error) result =
+    (full_p_tree) ctx : (parse_tree * typ_context, static_error) result =
   match (typeof_parse_tree do_tree ctx, typeof_parse_tree return_tree ctx) with 
-  | (Ok TUnit, Ok TTable) -> Ok full_p_tree 
-  | (Ok TUnit, Ok typ) -> Error (TypeError (expected_found TTable typ))
-  | (Ok typ, Ok TTable) -> Error (TypeError (expected_found TUnit typ))
-  | (Ok typ, Ok _) -> Error  (TypeError (expected_found TUnit typ))
+  | (Ok (TUnit, _), Ok (TTable, _)) -> Ok (full_p_tree, ctx)
+  | (Ok (TUnit, _), Ok (typ, _)) -> Error (TypeError (expected_found TTable typ))
+  | (Ok (typ, _), Ok (TTable, _)) -> Error (TypeError (expected_found TUnit typ))
+  | (Ok (typ, _), Ok _) -> Error  (TypeError (expected_found TUnit typ))
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e 
 
-
+let ast_of_parse_tree (p_tree: parse_tree) (full_ctx : typ_context): expression = 
+  match p_tree with 
+  | PApp (f_var, argument) -> failwith "Unimplemented"
+  | _ -> failwith "Unimplemented"
