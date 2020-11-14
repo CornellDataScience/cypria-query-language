@@ -112,18 +112,22 @@ rule token = parse
         { LBRACKET }
   | "]"
         { RBRACKET }
+  | ","
+        { COMMA }
+  | ";"
+        { SEMICOLON }
   | "="
         { EQUAL }
   | "&&"
         { AND }
   | "$"
-        {BOOL}
+        { BOOL }
   | "||"
         { OR }
   | "not"
         { NOT }
   | "filter"
-        {FILTER}
+        { FILTER }
   | eof
         { EOF }
   | _
