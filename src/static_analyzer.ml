@@ -7,12 +7,46 @@ type static_error =
 
 type typ_context = (id * cypria_type) list
 
+exception TypingContextException of string 
+
+let curry_fun_typ (lst: cypria_type list) : cypria_type = 
+  let remove_last_two lst = 
+    match List.rev lst with 
+    | last::second::rest -> (List.rev rest, TFun(second, last))
+    | _::[] | [] -> raise (TypingContextException "Not enough types to curry.")
+  in
+  let (rest_lst, starting_fun) = remove_last_two lst in 
+  List.fold_right 
+    (fun c_typ f_typ -> TFun (c_typ, f_typ)) 
+    rest_lst 
+    starting_fun
+
 (** Starting type context contains the types for all built-in values. *)
-let starting_context = []
+let starting_context : typ_context = [
+  ("filter", curry_fun_typ [TBool; TTable]);
+  ("map", curry_fun_typ [TMapConfig; TTable; TTable]);
+  ("filter_min", curry_fun_typ [TAttributeList; TString; TTable; TTable]);
+  ("filter_max", curry_fun_typ [TAttributeList; TString; TTable; TTable]);
+  ("count", curry_fun_typ [TAttributeList; TTable; TTable]);
+  ("join",curry_fun_typ [TBool; TTable; TTable; TTable]);
+  (* Different syntax than Parser V1 *)
+  ("do_return", curry_fun_typ [TUnit; TTable; TTable]);
+  (* TODO(ar727): Currently, optional arguments are required, 
+     let's see if we should keep it, or come up with a better system. *)
+  (* [TString] argument is the name of the Table being 
+     inserted/deleted into/from *)
+  ("insert", curry_fun_typ [TAttributeList; TAttributeList; TString; TUnit]);
+  ("delete", curry_fun_typ [TBool; TAttributeList; TUnit]);
+  (* Different syntax than Parser V1 - might want to consider making this a 
+     parse tree level expression. *)
+  ("assign", curry_fun_typ [TString; TTable; TUnit]);
+  ("assign", curry_fun_typ [TTable; TUnit]);
+  (* TODO(ar727): cypr_bool functions *)
+]
 
 let rec string_of_typ (typ : cypria_type) : string = 
   match typ with 
-  | TBool -> "bool"
+  | TBool -> "boolean condition"
   | TTable -> "sql_table"
   | TTuple -> "sql_tuple"
   | TAttributeList -> "attribute_list"
@@ -20,6 +54,7 @@ let rec string_of_typ (typ : cypria_type) : string =
   | TUnit -> "unit"
   | TFun (typ1, typ2) -> (string_of_typ typ1) ^ " -> " ^ (string_of_typ typ2)
   | TAlpha -> "unknown_type"
+  | TString -> "string"
 
 let expected_found expected found : string = 
   "Expected type: " ^ (string_of_typ expected) ^ 
@@ -95,7 +130,14 @@ let rec typeof_parse_tree
       | Ok (_, ctx') ->  Ok (TTable, ctx') 
       | Error e -> Error e
     end
-  | _ -> Error (TypeError "Unimplemented")
+  | PString _ -> Ok(TString, ctx)
+  | PVar id -> 
+    begin
+      match List.assoc_opt id ctx with 
+      | Some typ -> Ok (typ, ctx)
+      | None -> Error (UnknownValue ("Unknown variable: " ^ id))
+    end
+
 
 
 (** [typecheck p_tree starting_ctx] is the [parse_tree] [p_tree] 
@@ -135,7 +177,13 @@ and typecheck
     Error (TypeError "Unimplemented")
   | PDoReturn (do_p_tree, return_p_tree) -> 
     typecheck_do_return do_p_tree return_p_tree p_tree ctx 
-  | _ -> Error (TypeError "Unimplemented")
+  | PVar id -> 
+    begin
+      match List.assoc_opt id ctx with 
+      | Some _ -> Ok (p_tree, ctx)
+      | None -> Error (UnknownValue ("Unknown variable: " ^ id))
+    end
+  | PString (str, typ) -> naive_type_check typ TString p_tree ctx
 
 and typ_equals typ1 typ2 = typ1 = typ2 
 
