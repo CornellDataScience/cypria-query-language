@@ -45,7 +45,7 @@ expr:
         {PApp(PSQLBool (e1,TBool),PSQLTable (e2,TTable))}
   | NOT; e = simple_expr
         {PNot (PSQLBool (e,TBool))}
-  | e1 = simple_expr; AND; e2 = simple_epr
+  | e1 = simple_expr; AND; e2 = simple_expr
         {Pand(PSQLBool (e1,TBool),PSQLBool (e2,TBool))}
   | e1 = simple_expr; OR; e2 = simple_epr
         {POr(PSQLBool (e1,TBool),PSQLBool (e2,TBool))}

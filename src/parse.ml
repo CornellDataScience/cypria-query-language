@@ -4,6 +4,7 @@
  ******************************************************************************)
 
 open Lexing
+open Lexer
 
 exception SyntaxError of string
 
