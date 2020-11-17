@@ -20,6 +20,7 @@ let has_dups lst =
 %token <string> ID STRING
 %token EQUAL AND BOOL OR NOT
 %token LPAREN RPAREN LBRACKET RBRACKET 
+%token COMMA
 %token EOF
 
 %start <Ast.expr> parse_expression
@@ -38,38 +39,53 @@ parse_phrase:
         { raise End_of_file }
 	;
 
+(* Not sure if this is right -- David *)
+elt:
+  | ; (* Empty element *)
+        {  }
+  | e = string
+        { TString e }
+  | LPAREN; e = elt; RPAREN
+        { TString e }
+  | LBRACKET; e = elt; RBRACKET
+        { TAttributeList e }
+
 expr:
   | e = simple_expr
         { e }
   | FILTER; LPAREN; e1 = simple_expr; RPAREN; LPAREN; e2 = simple_expr; RPAREN
-        {PApp(PSQLBool (e1,TBool),PSQLTable (e2,TTable))}
+        { PApp(PSQLBool (e1,TBool), PSQLTable (e2,TTable)) }
   | NOT; e = simple_expr
-        {PNot (PSQLBool (e,TBool))}
+        { PNot (PSQLBool (e,TBool)) }
   | e1 = simple_expr; AND; e2 = simple_expr
-        {Pand(PSQLBool (e1,TBool),PSQLBool (e2,TBool))}
-  | e1 = simple_expr; OR; e2 = simple_epr
-        {POr(PSQLBool (e1,TBool),PSQLBool (e2,TBool))}
-  | e1 = simple_expr; EQUAL; e2 = simple_epr
-        {PEqual(PSQLBool (e1,TBool),PSQLBool (e2,TBool))}
+        { PAnd(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
+  | e1 = simple_expr; OR; e2 = simple_expr
+        { POr(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
+  | e1 = simple_expr; EQUAL; e2 = simple_expr
+        { PEqual(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
+  | e = elt; COMMA; e1 = simple_expr
+        { PTuple (e, e1) }
+  | e = elt; SEMICOLON; e1 = simple_expr
+        { PAttributeList (e, e1) }
 	;
 
 simple_expr:
   | x = ident
         { make_var x }
   | LPAREN; e = expr; RPAREN
-        {PSQLTable e }
+        { PSQLTable e }
   | BEGIN; e = expr; END
-        {PSQLTable e }
+        { PSQLTable e }
   | BOOL; e = expr; BOOL
-        {PSQLBool e}
+        { PSQLBool e }
               
 
 %inline unop:
-  | NOT { PNot}
+  | NOT { PNot }
 
 %inline binop:
   | AND { PAnd }
   | OR { POr }
-  | EQUAL {PEqual}
+  | EQUAL { PEqual }
 
   ;

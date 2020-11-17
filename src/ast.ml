@@ -11,6 +11,7 @@ type cypria_type =
   | TMapConfig
   | TUnit
   | TAlpha 
+  | TString
 
 type 'a typed = 'a * cypria_type
 
@@ -30,6 +31,7 @@ type parse_tree =
   | PAttributeList of (string list) typed
   | PLet of id typed * parse_tree * parse_tree
   | PDoReturn of parse_tree * parse_tree
+  | PString of string typed
 
 let _ = PAttributeList ((["name"; "dob"; "major"]), TAttributeList)
 
