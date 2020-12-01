@@ -121,9 +121,25 @@ let rec typeof_parse_tree
       | Error e -> Error e
     end
   (* let (id: id_type) = e1 in e2 *)
-  | PLet ((id, id_typ), e_1, e_2) -> 
-    (* TODO: qx27 *)
-    Error (TypeError "Unimplemented. Will call typecheck")
+  | PLet ((id, id_typ), e_1, e_2) -> begin
+      match typecheck p_tree ctx with
+      | Ok _ -> begin 
+          let ctx =  (id, id_typ)::ctx in
+          match typeof_parse_tree e_2 ctx with
+          | Ok (t, ctx) -> Ok (t, ctx)
+          | Error e -> Error e
+          (*| Ok(TFun (a, b),ctx)-> typeof_e1 e_1 ctx
+            | Ok(TTable, ctx)-> typeof_e1 e_1 ctx
+            | Ok(TBool, ctx)-> typeof_e1 e_1 ctx
+            | TTuple, ctx-> typeof_e1 e_1 ctx
+            | TAttributeList,ctx-> typeof_e1 e_1 ctx
+            | TMapConfig, ctx-> typeof_e1 e_1 ctx
+            | TUnit,ctx-> typeof_e1 e_1 ctx
+            | TAlpha, ctx-> typeof_e1 e_1 ctx
+            | TString, ctx-> typeof_e1 e_1 ctx*)
+        end
+      | Error e -> Error e
+    end
   | PDoReturn (_, _) -> 
     begin
       match typecheck p_tree ctx with 
@@ -173,8 +189,27 @@ and typecheck
     typecheck_application (fun_tree, arg_tree) ctx
   (* let (id: id_type) = e1 in e2 *)
   | PLet ((id, id_typ), e_1, e_2) -> 
-    (* TODO: qx27 *)
-    Error (TypeError "Unimplemented")
+    (*typeof_e1 e_1 ctx*)
+    (*typecheck_let id_typ, e_1, ctx *)
+    (* Make sure that e1 and id_typ match, as in the type of e1 is equal to id_typ *)
+    (*Create a new context ctx' by adding the mapping (id -> id_typ) to ctx [ctx' = (id, id_typ)::ctx]  *)
+    (** Use ctx' to make sure that typecheck e2 ctx' is Ok and not Error *)
+    (*Return Ok(p_tree, ctx') *)
+    (*if (typeof_parse_tree e1) = id_typ and typecheck e2 ctx' where ctx' is (id, id_typ)::ctx 
+      then let id = e1 in e2 will typecheck*)
+    begin match typeof_parse_tree e_1 ctx with 
+      | Ok (e1_type, ctx) -> begin
+          if e1_type = id_typ then
+            let ctx =  (id, id_typ)::ctx in 
+            match typecheck e_2 ctx with
+            | Ok(_, ctx) -> Ok(p_tree, ctx)
+            | Error e  -> Error e 
+          else Error (TypeError (expected_found id_typ e1_type))
+        end
+      | Error e -> Error e 
+    end
+
+  (*Ok _ -> Error ((UnknownValue ("Unknown variable: " ^ id))*)
   | PDoReturn (do_p_tree, return_p_tree) -> 
     typecheck_do_return do_p_tree return_p_tree p_tree ctx 
   | PVar id -> 
@@ -235,6 +270,34 @@ and typecheck_do_return
   | (Ok (typ, _), Ok _) -> Error  (TypeError (expected_found TUnit typ))
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e 
+(*let id = e1 in e2 *)
+(*and typeof_e2 e_2 ctx = 
+  match typeof_parse_tree e_2 ctx with
+  | Ok (TFun (_, b)) -> Ok b
+  | Ok (TTable,ctx) -> Ok (TTable,ctx)
+  | Ok (TBool,ctx) -> Ok (TBool, ctx)
+  | Ok (TTuple,ctx) -> Ok (TTuple,ctx)
+  | Ok (TAttributeList,ctx) -> Ok (TAttributeList, ctx)
+  | Ok (TMapConfig,ctx) -> Ok (TMapConfig,ctx)
+  | Ok (TUnit,ctx) -> Ok (TUnit,ctx)
+  | Ok (TAlpha,ctx) -> Ok (TAlpha,ctx)
+  | Ok (TString,ctx) -> Ok (TString,ctx)
+  | Error e -> Error e
+  | _ -> failwith "Unimplemented"*)
+
+(*and typeof_e1 e_1 e_2 ctx = 
+  match typeof_parse_tree e_1 ctx, e_2 with
+  | Ok (TFun (_, b)) -> typeof_e2 e_2 ctx
+  | Ok (TTable,ctx) -> typeof_e2 e_2 ctx
+  | Ok (TBool,ctx) -> typeof_e2 e_2 ctx
+  | Ok (TTuple,ctx) -> typeof_e2 e_2 ctx
+  | Ok (TAttributeList,ctx) -> typeof_e2 e_2 ctx
+  | Ok (TMapConfig,ctx) -> typeof_e2 e_2 ctx
+  | Ok (TUnit,ctx) -> typeof_e2 e_2 ctx
+  | Ok (TAlpha,ctx) -> typeof_e2 e_2 ctx
+  | Ok (TString,ctx) -> typeof_e2 e_2 ctx
+  | Error e -> Error e
+  | _ -> failwith "Unimplemented"*)
 
 let ast_of_parse_tree (p_tree: parse_tree) (full_ctx : typ_context): expression = 
   match p_tree with 
