@@ -9,7 +9,6 @@
 
 %{
 open Ast
-open Ast_factory
 
 let has_dups lst =
   let open List in
@@ -18,37 +17,34 @@ let has_dups lst =
 
 %token <string> INT
 %token <string> ID STRING
-%token EQUAL AND BOOL OR NOT
-%token LPAREN RPAREN LBRACKET RBRACKET 
-%token COMMA
+%token EQUAL AND BOOL OR NOT FILTER
+%token LPAREN RPAREN LBRACKET RBRACKET
+%token COMMA SEMICOLON
 %token EOF
 
-%start <Ast.expr> parse_expression
-%start <Ast.phrase> parse_phrase
+%start <parse_tree> expr
 
 %%
 
 parse_expression:
   | e = expr; EOF
-        { e }
-
+        {e}
+/* 
 parse_phrase:
-	| e = expr; DOUBLE_SEMI?; EOF
+	| e = expr; EOF
 		{ TTABLE e }
   |  EOF
         { raise End_of_file }
-	;
+	; */
 
-(* Not sure if this is right -- David *)
+/* (* Not sure if this is right -- David *)
 elt:
-  | ; (* Empty element *)
-        {  }
   | e = string
         { TString e }
   | LPAREN; e = elt; RPAREN
         { TString e }
   | LBRACKET; e = elt; RBRACKET
-        { TAttributeList e }
+        { TAttributeList e } */
 
 expr:
   | e = simple_expr
@@ -63,21 +59,20 @@ expr:
         { POr(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
   | e1 = simple_expr; EQUAL; e2 = simple_expr
         { PEqual(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
+/* I think for lists-like things we need a function that loops through and parses each element.
   | e = elt; COMMA; e1 = simple_expr
         { PTuple (e, e1) }
   | e = elt; SEMICOLON; e1 = simple_expr
-        { PAttributeList (e, e1) }
+        { PAttributeList (e, e1) } */
 	;
 
 simple_expr:
-  | x = ident
-        { make_var x }
-  | LPAREN; e = expr; RPAREN
-        { PSQLTable e }
-  | BEGIN; e = expr; END
+      | e = String;
+            {e}
+  /* | LPAREN; e = expr; RPAREN
         { PSQLTable e }
   | BOOL; e = expr; BOOL
-        { PSQLBool e }
+        { PSQLBool e } */
               
 
 %inline unop:

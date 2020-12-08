@@ -3,7 +3,7 @@
    It provides an interface between the parser and the rest of the interpreter.
  ******************************************************************************)
 
-open Lexing
+(* open Lexing
 open Lexer
 
 exception SyntaxError of string
@@ -41,4 +41,12 @@ let parse_expr =
   parse Parser.parse_expression
 
 let parse_phrase =
-  parse Parser.parse_phrase
+  parse Parser.parse_phrase *)
+
+
+open Ast 
+
+let parse (s : string) : parse_tree =
+  let lexbuf = Lexing.from_string s in
+  let ast = Parser.prog Lexer.read lexbuf in
+  ast
