@@ -44,9 +44,24 @@ let parse_phrase =
   parse Parser.parse_phrase *)
 
 
-open Ast 
+open Ast
 
-let parse (s : string) : parse_tree =
+let parse () : parse_tree =
+  Printf.printf "enter Cypria>";
+  let s = read_line () in
   let lexbuf = Lexing.from_string s in
-  let ast = Parser.prog Lexer.read lexbuf in
+  let ast = Menhir_parser.parse_expression Lexer.token lexbuf in
   ast
+
+let rec printString (p:parse_tree): string = 
+  match p with
+  |PNot x ->
+    "PNot" ^ printString(x)
+  |PSQLBool b ->
+    "PSQLBOOL" ^ fst b
+  |_ ->
+    "bad"
+
+let _ =  let x = parse () in (
+  let s = printString x in (Printf.printf "%s" s)
+)

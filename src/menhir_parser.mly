@@ -1,12 +1,3 @@
-(******************************************************************************
-   You do not need to modify anything in this file.
- ******************************************************************************)
-
-(* Acknowledgement:  this parser is adapted from the OCaml 4.04 parser
- *  [https://github.com/ocaml/ocaml/blob/trunk/parsing/parser.mly],
- *  written by Xavier Leroy, projet Cristal, INRIA Rocquencourt
- *  and distributed under the GNU Lesser General Public License version 2.1. *)
-
 %{
 open Ast
 
@@ -16,19 +7,20 @@ let has_dups lst =
 %}
 
 %token <string> INT
-%token <string> ID STRING
+%token <string> ID
 %token EQUAL AND BOOL OR NOT FILTER
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token COMMA SEMICOLON
 %token EOF
 
-%start <parse_tree> expr
+%start <Ast.parse_tree> parse_expression
 
 %%
 
 parse_expression:
   | e = expr; EOF
         {e}
+  ;
 /* 
 parse_phrase:
 	| e = expr; EOF
@@ -48,10 +40,10 @@ elt:
 
 expr:
   | e = simple_expr
-        { e }
+        { PString (e,TString) }
   | FILTER; LPAREN; e1 = simple_expr; RPAREN; LPAREN; e2 = simple_expr; RPAREN
         { PApp(PSQLBool (e1,TBool), PSQLTable (e2,TTable)) }
-  | NOT; e = simple_expr
+  | NOT; LPAREN; e = simple_expr; RPAREN;
         { PNot (PSQLBool (e,TBool)) }
   | e1 = simple_expr; AND; e2 = simple_expr
         { PAnd(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
@@ -64,11 +56,12 @@ expr:
         { PTuple (e, e1) }
   | e = elt; SEMICOLON; e1 = simple_expr
         { PAttributeList (e, e1) } */
-	;
+  ;
 
 simple_expr:
-      | e = String;
+      | e = ID;
             {e}
+      ;
   /* | LPAREN; e = expr; RPAREN
         { PSQLTable e }
   | BOOL; e = expr; BOOL

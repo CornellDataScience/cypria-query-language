@@ -1,20 +1,7 @@
-(******************************************************************************
-   You do not need to modify anything in this file.
- ******************************************************************************)
-
-(* Acknowledgement:  the lexing code for strings, integers, identifiers
- *  and comments is adapted from the OCaml 4.04 lexer
- *  [https://github.com/ocaml/ocaml/blob/trunk/parsing/lexer.mll],
- *  written by Xavier Leroy, projet Cristal, INRIA Rocquencourt
- *  and distributed under the GNU Lesser General Public License version 2.1. *)
-
-(******************************************************************)
-(* Lexer header *)
-(******************************************************************)
 
 {
-open Lexing
-open Parser
+(* open Lexing *)
+open Menhir_parser
 
 exception Error
 
@@ -81,10 +68,10 @@ let char_for_hexadecimal_code lexbuf i =
 (******************************************************************)
 
 let newline = ('\013'* '\010')
-let blank = [' ' '\009' '\012']
+let blank = [' ' '\009' '\012']+
 let lowercase = ['a'-'z']
 let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9']
-let id = (lowercase | '_') identchar*
+let id = identchar+
 
 let decimal_literal =
   ['0'-'9'] ['0'-'9' '_']*
@@ -100,10 +87,8 @@ let int_literal =
   decimal_literal | hex_literal | oct_literal | bin_literal
 
 rule token = parse
-  | blank+
+  | blank
         { token lexbuf }
-  | ['\n']
-        { new_line lexbuf; token lexbuf }
   | "("
         { LPAREN }
   | ")"
@@ -128,22 +113,24 @@ rule token = parse
         { NOT }
   | "filter"
         { FILTER }
+  | id
+        {ID (Lexing.lexeme lexbuf) }
   | eof
         { EOF }
   | _
-        { raise Error }
+        {raise Error}
 
 
 and string = parse
   | '\"'
         { () }
-  | '\\' newline ([' ' '\t'] * as space)
+  (*| '\\' newline ([' ' '\t'] * as space)
         { new_line lexbuf;
           let pos = lexbuf.lex_curr_p in
           lexbuf.lex_curr_p <- { pos with
             pos_bol = pos.pos_cnum - (String.length space)
           };
-          string lexbuf }
+          string lexbuf }*)
   | '\\' ['\\' '\'' '\"' 'n' 't' 'b' 'r' ' ']
         { store_escaped_char lexbuf
                              (char_for_backslash(Lexing.lexeme_char lexbuf 1));
@@ -159,12 +146,12 @@ and string = parse
           string lexbuf }
   | '\\' _
         { raise Error }
-  | newline
+  (* | newline
         { new_line lexbuf;
           store_lexeme lexbuf;
-          string lexbuf }
+          string lexbuf } *)
   | eof
-        { raise Error }
+        {Printf.printf "Whoops";}
   | _
         { store_string_char(Lexing.lexeme_char lexbuf 0);
           string lexbuf }

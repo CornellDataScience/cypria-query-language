@@ -5,6 +5,7 @@ OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo)
 MLIS=$(UNITS:=.mli)
 TEST=test.byte
 MAIN=main.byte
+PARSE = parse.byte
 REPL=repl.byte
 OCAMLBUILD=ocamlbuild -no-hygiene -use-ocamlfind -pkgs oUnit,str
 PKGS=oUnit,str
@@ -23,6 +24,9 @@ repl:
 
 main: 
 	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
+
+parse:
+	$(OCAMLBUILD) -use-menhir $(PARSE) && ./$(PARSE)
 	
 check:
 	bash checkenv.sh && bash checktypes.sh

@@ -1,3 +1,3 @@
 open Ast
 open Variable
-val parse : string -> parse_tree
+val parse : unit -> Ast.parse_tree
