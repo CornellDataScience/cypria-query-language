@@ -64,15 +64,14 @@ expr:
         { PAnd(e1, e2) }
   | e1 = expr; OR; e2 = expr
         { POr(e1, e2) }
-  | BOOL; e1 = sql_table_expr; BOOL;
-        { PSQLBool(e1, TBool)}
   | e1 = expr; EQUAL; e2 = expr
         { PEqual(e1, e2) }
-/* I think for lists-like things we need a function that loops through and parses each element.
-  | e = elt; COMMA; e1 = simple_expr
-        { PTuple (e, e1) }
-  | e = elt; SEMICOLON; e1 = simple_expr
-        { PAttributeList (e, e1) } */
+  | BOOL; e1 = simple_expr; BOOL;
+        { PSQLBool(e1, TBool)}
+  | xs = delimited(LPAREN, separated_nonempty_list(COMMA, simple_expr), RPAREN);
+        { PTuple (xs, TTuple) }
+  | xs = delimited(LBRACKET, separated_nonempty_list(SEMICOLON, simple_expr), RBRACKET);
+        { PAttributeList (xs, TAttributeList) }        
   ;
 
 var_or_table:

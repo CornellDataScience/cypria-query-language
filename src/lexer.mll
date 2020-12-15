@@ -106,13 +106,13 @@ and tuple_or_expression =
 let newline = ('\013'* '\010')
 let blank = [' ' '\009' '\012']+
 let lowercase = ['a'-'z']
-let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9']
+let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9' '.' '=']
 let id = identchar+
 let sql_bool = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9' ' ' '\009' '\012' '.' '=']
 (* Idea for generalizing keywords, should not be needed anymore *)
 (* let two_param = "filter" | "contains"
 let three_param = "filter_min" | "filter_max" *)
-
+(*filter($sailors.sid=100$)(Sailors)*)
 let decimal_literal =
   ['0'-'9'] ['0'-'9' '_']*
 let hex_digit =
@@ -161,10 +161,6 @@ rule token = parse
         {DO}
   | "return"
         {RETURN}
-  (* | two_param
-        {TWO_PARAM}
-  | three_param
-        {THREE_PARAM} *)
   | id
         {ID (Lexing.lexeme lexbuf)}
   | sql_bool 
