@@ -42,7 +42,13 @@ let starting_context : typ_context = [
      parse tree level expression. *)
   ("assign", curry_fun_typ [TString; TTable; TUnit]);
   ("assign", curry_fun_typ [TTable; TUnit]);
-  (* TODO(ar727): cypr_bool functions *)
+  (* cypr_bool functions *)
+  ("has_rows", curry_fun_typ [TTable; TBool]);
+  (* TString argument is attribute *)
+  ("contains_tuple", curry_fun_typ [TTuple; TString; TBool]);
+  ("contains", curry_fun_typ [TTable; TString; TBool]);
+  (* TString arguments are attribute then pattern *)
+  ("like", curry_fun_typ [TString; TString; TBool]);
 ]
 
 let rec string_of_typ (typ : cypria_type) : string = 
@@ -85,6 +91,8 @@ let string_of_static_error e =
   | UnexpectedTopLevelType t -> 
     "Unexpected top-level type, expected sql_table, got: " ^ (string_of_typ t)
 
+(** [expected_found expected found] is a string describing an error message 
+    where [expected] is expected but type [found] is found. *)
 let expected_found expected found : string = 
   "Expected type: " ^ (string_of_typ expected) ^ 
   ". But, found type: " ^ (string_of_typ found)
@@ -195,8 +203,16 @@ and typecheck
   match p_tree with 
   | PSQLTable (table, typ) -> naive_type_check typ TTable p_tree ctx
   | PSQLBool (str, typ) -> naive_type_check typ TBool p_tree ctx
-  | PAnd (left, right) | POr (left, right) | PEqual (left, right) -> 
+  | PAnd (left, right) | POr (left, right) -> 
     typecheck_binary_bool left right p_tree ctx 
+  | PEqual (left, right) -> begin 
+      match (typeof_parse_tree left ctx), (typeof_parse_tree right ctx) with
+      | Ok (TString, _), Ok(TString, _) -> Ok (p_tree, ctx)
+      | Ok (typ, _), Ok (TString, _) 
+      | Ok (TString, _), Ok (typ, _) 
+      | Ok (typ, _), Ok _  -> Error (TypeError (expected_found TString typ))
+      | Error e, _ | _, Error e -> Error e
+    end
   | PNot (sql_p_tree) -> begin 
       match typeof_parse_tree sql_p_tree ctx with 
       | Ok (TBool, _) -> Ok (p_tree, ctx)
@@ -415,6 +431,20 @@ and cypr_bool_of_p_tree (p_tree: parse_tree)
 
 and cypr_bool_of_application p_tree ctx : (Ast.cypr_bool, static_error) result = 
   match p_tree with 
+  | PApp(PVar "has_rows", exp_tree) -> begin 
+      match ast_of_parse_tree exp_tree ctx with 
+      | Ok exp -> Ok (HasRows exp) 
+      | Error e -> Error e
+    end
+  | PApp (PApp (PVar "contains_tuple", PTuple (lst, _)), PString (str, _)) -> 
+    Ok (Contains (Tuple lst, str))
+  | PApp (PApp (PVar "contains", exp_tree), PString (str, _)) -> begin 
+      match ast_of_parse_tree exp_tree ctx with 
+      | Ok exp -> Ok (Contains (Expression exp, str)) 
+      | Error e -> Error e
+    end
+  | PApp (PApp (PVar "like", PString(str1, _)), PString (str2, _)) -> 
+    Ok (Like (str1, str2))
   | _ -> Error (TypeError ("Expected function that returns cypria_bool."))
 
 and tuple_or_expression_of_p_tree (p_tree: parse_tree) 
