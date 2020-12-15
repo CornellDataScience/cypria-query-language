@@ -52,6 +52,8 @@ expr:
         { PApp(PApp (PVar "filter", e1), e2)}
   | DO; LPAREN; e1 = expr ; RPAREN; RETURN; LPAREN; e2 = expr ; RPAREN;
         { PDoReturn (e1, e2) }
+  | id =  simple_expr; LPAREN; e1 = expr ; RPAREN;
+        { PApp (PVar id, e1)}
   | id =  simple_expr; LPAREN; e1 = expr ; RPAREN; LPAREN; e2 = expr ; RPAREN;
         { PApp(PApp (PVar id, e1), e2)}
   | id =  simple_expr; LPAREN; e1 = expr ; RPAREN; LPAREN; e2 = expr ; RPAREN; LPAREN; e3 = expr ; RPAREN;
