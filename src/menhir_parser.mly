@@ -11,7 +11,7 @@ let is_capitalized s =
 
 %token <string> INT
 %token <string> ID
-%token EQUAL AND BOOL OR NOT FILTER LET IN DO RETURN
+%token EQUAL AND BOOL OR NOT FILTER LET IN DO RETURN BOOLEANS
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token COMMA SEMICOLON
 %token EOF
@@ -60,22 +60,10 @@ expr:
         { PLet ((e1, TString),e2, e3) }
   | BOOL; e1 = boolean_phrase; BOOL;
         { e1}
-  /* | NOT; e = expr; 
-        { PNot (e) }
-  | e1 = expr; AND; e2 = expr;
-        { PAnd(e1, e2) }
-  | e1 = expr; OR; e2 = expr;
-        { POr(e1, e2) }
-  | e1 = expr; EQUAL; e2 = expr;
-        { PEqual(e1, e2) }
-  | BOOL; e1 = simple_expr; BOOL;
-        { PSQLBool(e1, TBool)} */
-  
-/* I think for lists-like things we need a function that loops through and parses each element.
-  | e = elt; COMMA; e1 = simple_expr
-        { PTuple (e, e1) }
-  | e = elt; SEMICOLON; e1 = simple_expr
-        { PAttributeList (e, e1) } */
+  | xs = delimited(LPAREN, separated_nonempty_list(COMMA, simple_expr), RPAREN);
+        { PTuple (xs, TTuple) }
+  | xs = delimited(LBRACKET, separated_nonempty_list(SEMICOLON, simple_expr), RBRACKET);
+        { PAttributeList (xs, TAttributeList) }        
   ;
 
 var_or_table:
@@ -104,6 +92,10 @@ simple_expr:
   | BOOL; e = expr; BOOL
         { PSQLBool e } */
               
+/* sql_bool_expr: 
+      | e = BOOLEANS; 
+            {e} 
+      ; */
 
 /* %inline unop:
   | NOT { PNot }
