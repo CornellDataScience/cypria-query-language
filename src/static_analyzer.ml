@@ -475,10 +475,8 @@ and tuple_or_expression_of_p_tree (p_tree: parse_tree)
 
 let ast_of_string str : (Ast.expression, static_error) result =
   let p_tree = Parse.parse str in 
-  Printf.printf "%s\n" (string_of_p_tree p_tree);
   match typeof_parse_tree p_tree starting_context with
   | Ok (typ, full_ctx) -> 
-    Printf.printf "\n ** Typechecking Passed **\n";
     if typ = TTable 
     then ast_of_parse_tree p_tree full_ctx
     else Error (UnexpectedTopLevelType typ)

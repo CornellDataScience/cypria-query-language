@@ -29,7 +29,6 @@ let execute_input () : unit =
   | Invalid_argument s -> Printf.printf "Parsing issue, likely malformed boolean or unmatched paren. %s" s
 
 let execute_input_v2 () : unit = 
-  Printf.printf "enter Cypria>";
   let prog = read_line () in 
   match Static_analyzer.ast_of_string prog with 
   | Ok exp -> Printf.printf "%s\n"
