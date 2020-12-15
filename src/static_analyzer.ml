@@ -296,7 +296,7 @@ let rec ast_of_parse_tree
   match p_tree with 
   | PApp _ -> ast_of_application_parse_tree p_tree full_ctx 
   | PVar (id) -> Ok (Var id)
-  | PSQLTable (str, _) -> failwith "qx27" 
+  | PSQLTable (str, _) -> Ok (SQLTable str)
   | PSQLBool (bool_str, _) -> Error (UnexpectedTopLevelType TBool)
   | PAnd _ -> Error (UnexpectedTopLevelType TBool)
   | POr _ -> Error (UnexpectedTopLevelType TBool)
@@ -405,13 +405,33 @@ and side_effect_of_p_tree (p_tree: parse_tree)
 and cypr_bool_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.cypr_bool, static_error) result = 
   match p_tree with 
-  | PSQLBool (bool_str, _) -> failwith "qx27"
-  | PAnd (p1, p2) -> failwith "qx27"
-  | POr (p1, p2) -> failwith "qx27"
-  | PEqual _ -> failwith "ar727"
-  | PNot p1 -> failwith "qx27"
+  | PSQLBool (bool_str, _) -> Ok (SQLBool bool_str)
+  | PAnd (p1, p2) -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+      | Ok exp -> exp 
+      | _ ->  SQLBool "fail" in 
+    let y = match cypr_bool_of_p_tree p2 full_ctx with
+      | Ok exp -> exp
+      | _ -> SQLBool "fail" in
+    Ok (And (x,y))
+  | POr (p1, p2) -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+      | Ok exp -> exp 
+      | _ ->  SQLBool "fail" in 
+    let y = match cypr_bool_of_p_tree p2 full_ctx with
+      | Ok exp -> exp
+      | _ -> SQLBool "fail" in
+    Ok (Or (x,y))
+  | PEqual _ -> Ok (SQLBool "equal")
+  | PNot p1 -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+      | Ok exp -> exp 
+      | _ ->  SQLBool "fail" in 
+    Ok (Not x)
   | PApp _ -> cypr_bool_of_application p_tree full_ctx
   | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TBool)))
+
+(*and and_match p1 p2 : (Ast.cypr_bool, static_error) result = 
+  match And (p1, p2) with
+  | SQLBool bool_str -> Ok (SQLBool bool_str)
+  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TBool)))*)
 
 and cypr_bool_of_application p_tree ctx : (Ast.cypr_bool, static_error) result = 
   match p_tree with 
@@ -420,7 +440,7 @@ and cypr_bool_of_application p_tree ctx : (Ast.cypr_bool, static_error) result =
 and tuple_or_expression_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.tuple_or_expression, static_error) result = 
   match p_tree with 
-  | PTuple (lst, _) -> failwith "qx27"
+  | PTuple (lst, _) -> Ok (Tuple lst)
   | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TTuple)))
 
 let ast_of_string str : (Ast.expression, static_error) result =
