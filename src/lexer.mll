@@ -8,7 +8,7 @@ exception Error
 let comment_depth = ref 0
 
 (******************************************************************)
-(* Helper functions for lexing strings *)
+(*               Helper functions for lexing strings              *)
 (******************************************************************)
 
 let string_buffer = Buffer.create 256
@@ -64,7 +64,7 @@ let char_for_hexadecimal_code lexbuf i =
 }
 
 (******************************************************************)
-(* Lexer body *)
+(*                           Lexer body                           *)
 (******************************************************************)
 (* Inserted AST types for ease of access.
 
@@ -113,7 +113,7 @@ let booleans = sql_bool+
 (* Idea for generalizing keywords, should not be needed anymore *)
 (* let two_param = "filter" | "contains"
 let three_param = "filter_min" | "filter_max" *)
-(*filter($sailors.sid>10 && sailors.age<50$)(Sailors)*)
+(* filter($sailors.sid>10 && sailors.age<50$)(Sailors) *)
 let decimal_literal =
   ['0'-'9'] ['0'-'9' '_']*
 let hex_digit =
@@ -159,18 +159,18 @@ rule token = parse
   | "in"
         { IN }
   | "do"
-        {DO}
+        { DO }
   | "return"
-        {RETURN}
+        { RETURN }
   (* | booleans 
-        {BOOLEANS (Lexing.lexeme lexbuf)}  *)
+        { BOOLEANS (Lexing.lexeme lexbuf) }  *)
   | id
-        {ID (Lexing.lexeme lexbuf)}
+        { ID (Lexing.lexeme lexbuf) }
 
   | eof
         { EOF }
   | _
-        {raise Error}
+        { raise Error }
 
 
 and string = parse
@@ -203,7 +203,7 @@ and string = parse
           store_lexeme lexbuf;
           string lexbuf } *)
   | eof
-        {raise Error}
+        { raise Error }
   | _
         { store_string_char(Lexing.lexeme_char lexbuf 0);
           string lexbuf }
