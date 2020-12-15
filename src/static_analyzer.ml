@@ -32,7 +32,6 @@ let starting_context : typ_context = [
   ("count", curry_fun_typ [TAttributeList; TTable; TTable]);
   ("join",curry_fun_typ [TBool; TTable; TTable; TTable]);
   (* Different syntax than Parser V1 *)
-  ("do_return", curry_fun_typ [TUnit; TTable; TTable]);
   (* TODO(ar727): Currently, optional arguments are required, 
      let's see if we should keep it, or come up with a better system. *)
   (* [TString] argument is the name of the Table being 
@@ -43,7 +42,13 @@ let starting_context : typ_context = [
      parse tree level expression. *)
   ("assign", curry_fun_typ [TString; TTable; TUnit]);
   ("assign", curry_fun_typ [TTable; TUnit]);
-  (* TODO(ar727): cypr_bool functions *)
+  (* cypr_bool functions *)
+  ("has_rows", curry_fun_typ [TTable; TBool]);
+  (* TString argument is attribute *)
+  ("contains_tuple", curry_fun_typ [TTuple; TString; TBool]);
+  ("contains", curry_fun_typ [TTable; TString; TBool]);
+  (* TString arguments are attribute then pattern *)
+  ("like", curry_fun_typ [TString; TString; TBool]);
 ]
 
 let rec string_of_typ (typ : cypria_type) : string = 
@@ -86,6 +91,8 @@ let string_of_static_error e =
   | UnexpectedTopLevelType t -> 
     "Unexpected top-level type, expected sql_table, got: " ^ (string_of_typ t)
 
+(** [expected_found expected found] is a string describing an error message 
+    where [expected] is expected but type [found] is found. *)
 let expected_found expected found : string = 
   "Expected type: " ^ (string_of_typ expected) ^ 
   ". But, found type: " ^ (string_of_typ found)
@@ -196,8 +203,16 @@ and typecheck
   match p_tree with 
   | PSQLTable (table, typ) -> naive_type_check typ TTable p_tree ctx
   | PSQLBool (str, typ) -> naive_type_check typ TBool p_tree ctx
-  | PAnd (left, right) | POr (left, right) | PEqual (left, right) -> 
+  | PAnd (left, right) | POr (left, right) -> 
     typecheck_binary_bool left right p_tree ctx 
+  | PEqual (left, right) -> begin 
+      match (typeof_parse_tree left ctx), (typeof_parse_tree right ctx) with
+      | Ok (TString, _), Ok(TString, _) -> Ok (p_tree, ctx)
+      | Ok (typ, _), Ok (TString, _) 
+      | Ok (TString, _), Ok (typ, _) 
+      | Ok (typ, _), Ok _  -> Error (TypeError (expected_found TString typ))
+      | Error e, _ | _, Error e -> Error e
+    end
   | PNot (sql_p_tree) -> begin 
       match typeof_parse_tree sql_p_tree ctx with 
       | Ok (TBool, _) -> Ok (p_tree, ctx)
@@ -229,7 +244,6 @@ and typecheck
         end
       | Error e -> Error e 
     end
-
   (*Ok _ -> Error ((UnknownValue ("Unknown variable: " ^ id))*)
   | PDoReturn (do_p_tree, return_p_tree) -> 
     typecheck_do_return do_p_tree return_p_tree p_tree ctx 
@@ -288,16 +302,176 @@ and typecheck_do_return
   | (Ok (TUnit, _), Ok (TTable, _)) -> Ok (full_p_tree, ctx)
   | (Ok (TUnit, _), Ok (typ, _)) -> Error (TypeError (expected_found TTable typ))
   | (Ok (typ, _), Ok (TTable, _)) -> Error (TypeError (expected_found TUnit typ))
-  | (Ok (typ, _), Ok _) -> Error  (TypeError (expected_found TUnit typ))
+  | (Ok (typ, _), Ok _) -> Error (TypeError (expected_found TUnit typ))
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e 
 
-let ast_of_parse_tree 
+let rec ast_of_parse_tree 
     (p_tree: parse_tree) 
-    (full_ctx : typ_context): expression = 
+    (full_ctx : typ_context): (Ast.expression, static_error) result = 
   match p_tree with 
-  | PApp (f_var, argument) -> failwith "Unimplemented - ast_of_parse_tree"
-  | _ -> failwith "Unimplemented - ast_of_parse_tree"
+  | PApp _ -> ast_of_application_parse_tree p_tree full_ctx 
+  | PVar (id) -> Ok (Var id)
+  | PSQLTable (str, _) -> Ok (SQLTable str)
+  | PSQLBool (bool_str, _) -> Error (UnexpectedTopLevelType TBool)
+  | PAnd _ -> Error (UnexpectedTopLevelType TBool)
+  | POr _ -> Error (UnexpectedTopLevelType TBool)
+  | PEqual _ -> Error (UnexpectedTopLevelType TBool)
+  | PNot _ -> Error (UnexpectedTopLevelType TBool)
+  | PTuple _ -> Error (UnexpectedTopLevelType TTuple)
+  | PAttributeList _ -> Error (UnexpectedTopLevelType TAttributeList)
+  | PLet ((id, _), p1, p2) -> failwith "ar727"
+  | PDoReturn (p1, p2) -> failwith "ar727"
+  | PString _ -> Error (UnexpectedTopLevelType TString)
+
+and ast_of_application_parse_tree 
+    p_tree
+    full_ctx : (Ast.expression, static_error) result =
+  match p_tree with 
+  | PApp (PApp(PVar "filter", b_tree), p_tree) -> begin 
+      match (ast_of_parse_tree p_tree full_ctx), 
+            (cypr_bool_of_p_tree b_tree full_ctx) with 
+      | Ok exp, Ok bool -> Ok (Filter (bool, exp))
+      | Error e1, _ -> Error e1
+      | _, Error e2 -> Error e2
+    end 
+  | PApp (PApp(PVar "map", config_tree), exp_tree) -> begin 
+      match (ast_of_map_config config_tree full_ctx), 
+            (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok map_config, Ok exp -> Ok (Map (map_config, exp))
+      | Error e1, _ -> Error e1
+      | _, Error e2 -> Error e2
+    end 
+  | PApp (PApp (PApp
+                  (PVar "filter_min", 
+                   PAttributeList (lst, _)), 
+                PString (str, _)), exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Filter_min (lst, str, exp))
+      | Error e1 -> Error e1
+    end 
+  | PApp (PApp (PApp
+                  (PVar "filter_max", 
+                   PAttributeList (lst, _)), 
+                PString (str, _)), exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Filter_min (lst, str, exp))
+      | Error e1 -> Error e1
+    end 
+  | PApp (PApp (PVar "count_instances", PAttributeList(lst, _)), exp_tree) -> 
+    begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (CountInst (lst, exp))
+      | Error e1 -> Error e1
+    end 
+  | PApp (PApp (PApp (PVar "join", bool_tree), exp1_tree), exp2_tree) -> 
+    begin 
+      match (cypr_bool_of_p_tree bool_tree full_ctx), 
+            (ast_of_parse_tree exp1_tree full_ctx),  
+            (ast_of_parse_tree exp2_tree full_ctx) with 
+      | Ok bool, Ok e1, Ok e2 -> Ok (Join (bool, e1, e2))
+      | Error e, _, _ | _, Error e, _ | _, _, Error e -> Error e
+    end 
+  | _ -> 
+    Error 
+      (TypeError "Unrecognized function when building expression syntax tree.")
+
+and ast_of_map_config 
+    p_tree 
+    ctx : (Ast.map_configuration, static_error) result =
+  match p_tree with 
+  | PApp (PVar "project_cols", PAttributeList (lst, _)) -> 
+    Ok (ProjectCols (lst))
+  | _ -> Error 
+           (TypeError "Expected map configuration while building syntax tree.")
+and side_effect_of_p_tree (p_tree: parse_tree) 
+    (full_ctx : typ_context): (Ast.side_effect, static_error) result = 
+  match p_tree with 
+  | PApp (PApp (PApp 
+                  (PVar "insert", 
+                   PAttributeList(lst1, _)), 
+                PAttributeList(lst2, _)), 
+          PString (str, _)) ->  Ok (Insert (lst1, Some lst2, str))
+  | PApp (PApp 
+            (PVar "delete", 
+             bool_tree), 
+          PString (str, _)) -> begin 
+      match (cypr_bool_of_p_tree bool_tree full_ctx) with 
+      | Ok bool -> Ok (Delete (Some bool, str))
+      | Error e -> Error e
+    end
+  | PApp (PApp 
+            (PVar "assign", 
+             PString (str, _)), 
+          exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Assign (str, exp))
+      | Error e -> Error e
+    end
+  | PApp 
+      (PVar "ignore", exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Ignore (exp))
+      | Error e -> Error e
+    end
+  | _ -> Error 
+           (TypeError ("Expected type, when building syntax tree: " 
+                       ^ (string_of_typ TUnit)))
+
+and cypr_bool_of_p_tree (p_tree: parse_tree) 
+    (full_ctx : typ_context): (Ast.cypr_bool, static_error) result = 
+  match p_tree with 
+  | PSQLBool (bool_str, _) -> Ok (SQLBool bool_str)
+  | PAnd (p1, p2) -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+      | Ok exp -> exp 
+      | _ ->  SQLBool "fail" in 
+    let y = match cypr_bool_of_p_tree p2 full_ctx with
+      | Ok exp -> exp
+      | _ -> SQLBool "fail" in
+    Ok (And (x,y))
+  | POr (p1, p2) -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+      | Ok exp -> exp 
+      | _ ->  SQLBool "fail" in 
+    let y = match cypr_bool_of_p_tree p2 full_ctx with
+      | Ok exp -> exp
+      | _ -> SQLBool "fail" in
+    Ok (Or (x,y))
+  | PEqual _ -> Ok (SQLBool "equal")
+  | PNot p1 -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+      | Ok exp -> exp 
+      | _ ->  SQLBool "fail" in 
+    Ok (Not x)
+  | PApp _ -> cypr_bool_of_application p_tree full_ctx
+  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TBool)))
+
+(*and and_match p1 p2 : (Ast.cypr_bool, static_error) result = 
+  match And (p1, p2) with
+  | SQLBool bool_str -> Ok (SQLBool bool_str)
+  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TBool)))*)
+
+and cypr_bool_of_application p_tree ctx : (Ast.cypr_bool, static_error) result = 
+  match p_tree with 
+  | PApp(PVar "has_rows", exp_tree) -> begin 
+      match ast_of_parse_tree exp_tree ctx with 
+      | Ok exp -> Ok (HasRows exp) 
+      | Error e -> Error e
+    end
+  | PApp (PApp (PVar "contains_tuple", PTuple (lst, _)), PString (str, _)) -> 
+    Ok (Contains (Tuple lst, str))
+  | PApp (PApp (PVar "contains", exp_tree), PString (str, _)) -> begin 
+      match ast_of_parse_tree exp_tree ctx with 
+      | Ok exp -> Ok (Contains (Expression exp, str)) 
+      | Error e -> Error e
+    end
+  | PApp (PApp (PVar "like", PString(str1, _)), PString (str2, _)) -> 
+    Ok (Like (str1, str2))
+  | _ -> Error (TypeError ("Expected function that returns cypria_bool."))
+
+and tuple_or_expression_of_p_tree (p_tree: parse_tree) 
+    (full_ctx : typ_context): (Ast.tuple_or_expression, static_error) result = 
+  match p_tree with 
+  | PTuple (lst, _) -> Ok (Tuple lst)
+  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TTuple)))
 
 let ast_of_string str : (Ast.expression, static_error) result =
   let p_tree = Parse.parse str in 
@@ -306,7 +480,7 @@ let ast_of_string str : (Ast.expression, static_error) result =
   | Ok (typ, full_ctx) -> 
     Printf.printf "\n ** Typechecking Passed **\n";
     if typ = TTable 
-    then Ok (ast_of_parse_tree p_tree full_ctx) 
+    then ast_of_parse_tree p_tree full_ctx
     else Error (UnexpectedTopLevelType typ)
   | Error e -> Error e
 
