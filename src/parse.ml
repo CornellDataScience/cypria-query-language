@@ -63,5 +63,5 @@ let rec printString (p:parse_tree): string =
     "bad"
 
 let _ =  let x = parse () in (
-  let s = printString x in (Printf.printf "%s" s)
+  let s = printString x in (Printf.printf "%s\n" s)
 )

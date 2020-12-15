@@ -19,6 +19,8 @@ type 'a typed = 'a * cypria_type
     parser. The parse tree is parsed by the static analyzer for consistency 
     and type-checking and converted into the [Ast : expression] *)
 type parse_tree = 
+  (* Papp(Papp(PVar, arg1), arg2) *)
+  (* first parameter is function, second is papp of name of function, then arg2 *)
   | PApp of (parse_tree * parse_tree)
   | PVar of id
   | PSQLTable of string typed

@@ -66,12 +66,48 @@ let char_for_hexadecimal_code lexbuf i =
 (******************************************************************)
 (* Lexer body *)
 (******************************************************************)
+(* type expression = 
+  (** A base-level SQL table. Like [SQLTable "RESERVES"]. *)
+  | SQLTable of string
+  | Filter of cypr_bool * expression
+  | Map of map_configuration * expression
+  | Filter_min of attribute_list * string * expression
+  | Filter_max of attribute_list * string * expression
+  | Let of id * expression * expression
+  | Var of id 
+  | CountInst of attribute_list * expression
+  | Join of cypr_bool * expression * expression
+  | Do_return of side_effect * expression
+and side_effect = 
+  (** A command that alters the DB state, return unit *)
+  | Insert of attribute_list * attribute_list option * string
+  | Delete of cypr_bool option * string
+  | Assign of string * expression
+  | Ignore of expression
 
+and cypr_bool =
+  (** SQL Bool is a boolean statement valid in SQL. *)
+  | SQLBool of string 
+  | And of cypr_bool * cypr_bool
+  | Or of cypr_bool * cypr_bool
+  | Not of cypr_bool
+  | HasRows of expression
+  | Contains of tuple_or_expression * string  
+  | Like of string * string
+and map_configuration = 
+  | ProjectCols of attribute_list 
+and attribute_list = string list
+and tuple_or_expression = 
+  | Tuple of string list 
+  | Expression of expression *)
 let newline = ('\013'* '\010')
 let blank = [' ' '\009' '\012']+
 let lowercase = ['a'-'z']
 let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9']
 let id = identchar+
+
+let two_param = "filter" | "contains"
+let three_param = "filter_min" | "filter_max"
 
 let decimal_literal =
   ['0'-'9'] ['0'-'9' '_']*
@@ -113,6 +149,14 @@ rule token = parse
         { NOT }
   | "filter"
         { FILTER }
+  | "let"
+        { LET }
+  | "in"
+        { IN }
+  | two_param
+        {TWO_PARAM}
+  | three_param
+        {THREE_PARAM}
   | id
         {ID (Lexing.lexeme lexbuf) }
   | eof
@@ -151,7 +195,7 @@ and string = parse
           store_lexeme lexbuf;
           string lexbuf } *)
   | eof
-        {Printf.printf "Whoops";}
+        {raise Error}
   | _
         { store_string_char(Lexing.lexeme_char lexbuf 0);
           string lexbuf }
