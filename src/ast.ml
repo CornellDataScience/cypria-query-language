@@ -15,6 +15,7 @@ type cypria_type =
 
 type 'a typed = 'a * cypria_type
 
+
 (** Parse tree is an intermediate representation for Cypria created by the 
     parser. The parse tree is parsed by the static analyzer for consistency 
     and type-checking and converted into the [Ast : expression] *)
@@ -29,6 +30,7 @@ type parse_tree =
   | PNot of parse_tree
   | PTuple of (string list) typed
   | PAttributeList of (string list) typed
+  (* TODO: ar727 change typechcking to ignore typ *)
   | PLet of id typed * parse_tree * parse_tree
   | PDoReturn of parse_tree * parse_tree
   | PString of string typed
@@ -76,4 +78,6 @@ and attribute_list = string list
 and tuple_or_expression = 
   | Tuple of string list 
   | Expression of expression
+
+
 

@@ -1,20 +1,20 @@
-UNITS=interpreter reverse_parser parser variable static_analyzer
+UNITS=interpreter reverse_parser parser variable static_analyzer menhir_parser parse
 MLS_WITHOUT_MLIS=ast main
-MLS=$(UNITS:=.ml) $(MLS_WITHOUT_MLIS:=.ml)
-OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo) 
+MLS=$(MLS_WITHOUT_MLIS:=.ml) $(UNITS:=.ml)
+OBJECTS=$(UNITS:=.cmo) $(MLS_WITHOUT_MLIS:=.cmo)
 MLIS=$(UNITS:=.mli)
 TEST=test.byte
 MAIN=main.byte
 PARSE = parse.byte
 REPL=repl.byte
-OCAMLBUILD=ocamlbuild -no-hygiene -use-ocamlfind -pkgs oUnit,str
+OCAMLBUILD=ocamlbuild -no-hygiene -use-ocamlfind -use-menhir -pkgs oUnit,str
 PKGS=oUnit,str
 
 default: build
 	utop
 
 build:
-	$(OCAMLBUILD) $(OBJECTS) && $(OCAMLBUILD) $(MAIN)
+	$(OCAMLBUILD) $(OBJECTS)
 
 test:
 	$(OCAMLBUILD) -tag 'debug' $(TEST) && ./$(TEST)
@@ -22,8 +22,11 @@ test:
 repl:
 	$(OCAMLBUILD) $(REPL) && ./$(REPL)
 
-main: 
+main: 	
 	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
+
+buildparse: 
+	$(OCAMLBUILD) -use-menhir $(PARSE)
 
 parse:
 	$(OCAMLBUILD) -use-menhir $(PARSE) && ./$(PARSE)

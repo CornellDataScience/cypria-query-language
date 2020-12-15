@@ -42,7 +42,7 @@ expr:
   | e = simple_expr
         { PString (e,TString) }
   | FILTER; LPAREN; e1 = simple_expr; RPAREN; LPAREN; e2 = simple_expr; RPAREN
-        { PApp(PSQLBool (e1,TBool), PSQLTable (e2,TTable)) }
+        { PApp(PApp (PVar "filter", PSQLBool (e1,TBool)), PSQLTable (e2,TTable)) }
   | NOT; LPAREN; e = simple_expr; RPAREN;
         { PNot (PSQLBool (e,TBool)) }
   | e1 = simple_expr; AND; e2 = simple_expr
