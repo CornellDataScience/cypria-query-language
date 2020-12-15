@@ -108,6 +108,7 @@ let blank = [' ' '\009' '\012']+
 let lowercase = ['a'-'z']
 let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9']
 let id = identchar+
+let sql_bool = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9' ' ' '\009' '\012' '.' '=']
 (* Idea for generalizing keywords, should not be needed anymore *)
 (* let two_param = "filter" | "contains"
 let three_param = "filter_min" | "filter_max" *)
@@ -165,7 +166,9 @@ rule token = parse
   | three_param
         {THREE_PARAM} *)
   | id
-        {ID (Lexing.lexeme lexbuf) }
+        {ID (Lexing.lexeme lexbuf)}
+  | sql_bool 
+        {SQLBOOL (Lexing.lexeme lexbuf)}
   | eof
         { EOF }
   | _

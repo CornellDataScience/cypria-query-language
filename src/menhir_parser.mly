@@ -10,7 +10,7 @@ let is_capitalized s =
 %}
 
 %token <string> INT
-%token <string> ID
+%token <string> ID SQLBOOL
 %token EQUAL AND BOOL OR NOT FILTER LET IN TWO_PARAM THREE_PARAM DO RETURN
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token COMMA SEMICOLON
@@ -57,14 +57,14 @@ expr:
   | id =  simple_expr; LPAREN; e1 = expr ; RPAREN; LPAREN; e2 = expr ; RPAREN; LPAREN; e3 = expr ; RPAREN;
         { PApp(PApp(PApp (PVar id, e1), e2), e3)}
   | LET; e1 = simple_expr; EQUAL; e2 = expr; IN; e3 = expr
-        { PLet ((e1, TString),e2, e3) }
+        { PLet ((e1, TTable),e2, e3) }
   | NOT; e = expr; 
         { PNot (e) }
   | e1 = expr;  AND; e2 = expr;
         { PAnd(e1, e2) }
   | e1 = expr; OR; e2 = expr
         { POr(e1, e2) }
-  | BOOL; e1 = simple_expr; BOOL;
+  | BOOL; e1 = sql_table_expr; BOOL;
         { PSQLBool(e1, TBool)}
   | e1 = expr; EQUAL; e2 = expr
         { PEqual(e1, e2) }
@@ -89,6 +89,9 @@ simple_expr:
   | BOOL; e = expr; BOOL
         { PSQLBool e } */
               
+sql_table_expr: 
+      | e = SQLBOOL; 
+            {e}
 
 %inline unop:
   | NOT { PNot }
