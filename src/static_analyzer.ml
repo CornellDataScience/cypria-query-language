@@ -49,6 +49,7 @@ let starting_context : typ_context = [
   ("contains", curry_fun_typ [TTable; TString; TBool]);
   (* TString arguments are attribute then pattern *)
   ("like", curry_fun_typ [TString; TString; TBool]);
+  ("project_cols", curry_fun_typ [TAttributeList; TMapConfig])
 ]
 
 let rec string_of_typ (typ : cypria_type) : string = 
