@@ -11,7 +11,7 @@ let is_capitalized s =
 
 %token <string> INT
 %token <string> ID
-%token EQUAL AND BOOL OR NOT FILTER LET IN TWO_PARAM THREE_PARAM
+%token EQUAL AND BOOL OR NOT FILTER LET IN TWO_PARAM THREE_PARAM DO RETURN
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token COMMA SEMICOLON
 %token EOF
@@ -42,19 +42,20 @@ elt:
   | LBRACKET; e = elt; RBRACKET
         { TAttributeList e } */
 
-/* NEED TO DO: generic function handling. If pattern is e1(e2), then e1 immediately function. implement most functions. for contains, can just be expression. 
-keep function keyword stuff, but just add more for patterns*/
+
 expr:
 /* Is this table or string? lower case is PVar, uppercase is PSQLTable*/
-  | e = simple_expr
-        { if is_capitalized e then PSQLTable (e,TTable) else PVar (e,TString) }
-  | FILTER; LPAREN; e1 = expr; RPAREN; LPAREN; e2 = simple_expr; RPAREN
-        { PApp(e1, PSQLTable (e2,TTable)) }
-/* No way of knowing if e2 is table or string */
-  | TWO_PARAM; LPAREN; e1 = expr; RPAREN; LPAREN; e2 = expr; RPAREN; LPAREN; e3 = expr; RPAREN
-        { PApp(e1, e2) }
-/* Need parse tree with 3 params */
-  | THREE_PARAM; LPAREN; e1 = expr; RPAREN; LPAREN; e2 = expr; RPAREN
+  | e = var_or_table
+        { e }
+/* keeping filter for backup, but theoretically not needed */
+  | FILTER; LPAREN; e1 = expr; RPAREN; LPAREN; e2 = expr; RPAREN
+        { PApp(PApp (PVar "filter", e1), e2)}
+  | DO; LPAREN; e1 = expr ; RPAREN; RETURN; LPAREN; e2 = expr ; RPAREN;
+        { PApp(PApp (PVar "do_return", e1),e2)}
+  | id =  simple_expr; LPAREN; e1 = expr ; RPAREN; LPAREN; e2 = expr ; RPAREN;
+        { PApp(PApp (PVar id, e1), e2)}
+  | id =  simple_expr; LPAREN; e1 = expr ; RPAREN; LPAREN; e2 = expr ; RPAREN; LPAREN; e3 = expr ; RPAREN;
+        { PApp(PApp(PApp (PVar id, e1), e2), e3)}
   | LET; e1 = simple_expr; EQUAL; e2 = expr; IN; e3 = expr
         { PLet ((e1, TString),e2, e3) }
   | NOT; e = expr; 
@@ -67,6 +68,17 @@ expr:
         { PSQLBool(e1, TBool)}
   | e1 = expr; EQUAL; e2 = expr
         { PEqual(e1, e2) }
+        
+  /* | FILTER; LPAREN; e1 = simple_expr; RPAREN; LPAREN; e2 = simple_expr; RPAREN
+        { PApp(PApp (PVar "filter", PSQLBool (e1,TBool)), PSQLTable (e2,TTable)) }
+  | NOT; LPAREN; e = simple_expr; RPAREN;
+        { PNot (PSQLBool (e,TBool)) }
+  | e1 = simple_expr; AND; e2 = simple_expr
+        { PAnd(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
+  | e1 = simple_expr; OR; e2 = simple_expr
+        { POr(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
+  | e1 = simple_expr; EQUAL; e2 = simple_expr
+        { PEqual(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) } */
 /* I think for lists-like things we need a function that loops through and parses each element.
   | e = elt; COMMA; e1 = simple_expr
         { PTuple (e, e1) }
@@ -74,6 +86,11 @@ expr:
         { PAttributeList (e, e1) } */
   ;
 
+var_or_table:
+      |e = ID;
+            {if (is_capitalized e )
+            then PSQLTable (e,TTable) 
+            else PVar (e)}
 simple_expr:
       | e = ID;
             {e}

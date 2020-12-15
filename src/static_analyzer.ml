@@ -1,9 +1,11 @@
 open Ast 
 open Variable 
+open Parse
 
 type static_error = 
   | TypeError of string 
   | UnknownValue of string 
+  | UnexpectedTopLevelType of cypria_type
 
 type typ_context = (id * cypria_type) list
 
@@ -23,7 +25,7 @@ let curry_fun_typ (lst: cypria_type list) : cypria_type =
 
 (** Starting type context contains the types for all built-in values. *)
 let starting_context : typ_context = [
-  ("filter", curry_fun_typ [TBool; TTable]);
+  ("filter", curry_fun_typ [TBool; TTable; TTable]);
   ("map", curry_fun_typ [TMapConfig; TTable; TTable]);
   ("filter_min", curry_fun_typ [TAttributeList; TString; TTable; TTable]);
   ("filter_max", curry_fun_typ [TAttributeList; TString; TTable; TTable]);
@@ -56,9 +58,37 @@ let rec string_of_typ (typ : cypria_type) : string =
   | TAlpha -> "unknown_type"
   | TString -> "string"
 
+let rec string_of_p_tree (p_tree: parse_tree) : string = 
+  match p_tree with 
+  | PApp(s1, s2) -> 
+    "PApp (" ^ (string_of_p_tree s1) ^ ") (" ^ (string_of_p_tree s2) ^ ")"
+  | PVar x -> "PVar (" ^ x ^ ")"
+  | PSQLTable (tbl, typ) -> "PSQLTable (" ^ tbl ^ ") : " ^ (string_of_typ typ)
+  | PAnd (s1, s2) -> 
+    "PAnd (" ^ (string_of_p_tree s1) ^ ") (" ^ (string_of_p_tree s2) ^ ")"
+  | POr (s1, s2) -> 
+    "POr (" ^ (string_of_p_tree s1) ^ ") (" ^ (string_of_p_tree s2) ^ ")"
+  | PString (s, typ) -> "PString (" ^ s ^ ") : " ^ (string_of_typ typ)
+  | PSQLBool (s, typ) -> "PSQLBool (" ^ s ^ ") : " ^ (string_of_typ typ)
+  | PEqual (s1, s2) -> 
+    "PEqual (" ^ (string_of_p_tree s1) ^ ") (" ^ (string_of_p_tree s2) ^ ")"
+  | PNot (s1) -> 
+    "PNot (" ^ (string_of_p_tree s1) ^ ")"
+  | PLet ((id, typ), s1, s2) -> 
+    "PLet (" ^ (id ^ ": " ^ (string_of_typ typ)) ^ ") (" 
+    ^ (string_of_p_tree s1) ^ ") (" ^ (string_of_p_tree s2) ^ ")"
+  | _ -> "<UNIMPLEMENTED>"
+
+let string_of_static_error e = 
+  match e with 
+  | TypeError s -> "Type Error: " ^ s 
+  | UnknownValue s -> "Encountered an unknown value: " ^ s
+  | UnexpectedTopLevelType t -> 
+    "Unexpected top-level type, expected sql_table, got: " ^ (string_of_typ t)
+
 let expected_found expected found : string = 
   "Expected type: " ^ (string_of_typ expected) ^ 
-  ". But, found type: " ^ (string_of_typ expected)
+  ". But, found type: " ^ (string_of_typ found)
 
 let typeof (typed_parse_argument : 'a typed): cypria_type = 
   snd typed_parse_argument
@@ -115,7 +145,7 @@ let rec typeof_parse_tree
           | Ok (TFun (_, b), ctx_fun_arg) -> Ok (b, ctx') 
           | Error e -> Error e
           | Ok (unexpected_typ, ctx) -> 
-            let err_msg = expected_found (TFun (TAlpha, TAlpha)) unexpected_typ 
+            let err_msg = "ln 124" ^ expected_found (TFun (TAlpha, TAlpha)) unexpected_typ 
             in Error (TypeError err_msg)
         end
       | Error e -> Error e
@@ -128,15 +158,6 @@ let rec typeof_parse_tree
           match typeof_parse_tree e_2 ctx with
           | Ok (t, ctx) -> Ok (t, ctx)
           | Error e -> Error e
-          (*| Ok(TFun (a, b),ctx)-> typeof_e1 e_1 ctx
-            | Ok(TTable, ctx)-> typeof_e1 e_1 ctx
-            | Ok(TBool, ctx)-> typeof_e1 e_1 ctx
-            | TTuple, ctx-> typeof_e1 e_1 ctx
-            | TAttributeList,ctx-> typeof_e1 e_1 ctx
-            | TMapConfig, ctx-> typeof_e1 e_1 ctx
-            | TUnit,ctx-> typeof_e1 e_1 ctx
-            | TAlpha, ctx-> typeof_e1 e_1 ctx
-            | TString, ctx-> typeof_e1 e_1 ctx*)
         end
       | Error e -> Error e
     end
@@ -180,7 +201,7 @@ and typecheck
   | PNot (sql_p_tree) -> begin 
       match typeof_parse_tree sql_p_tree ctx with 
       | Ok (TBool, _) -> Ok (p_tree, ctx)
-      | Ok typ -> Error (TypeError (expected_found TBool typ))
+      | Ok (typ, _) -> Error (TypeError (expected_found TBool typ))
       | Error e -> Error e
     end
   | PTuple (_, typ) -> naive_type_check typ TTuple p_tree ctx
@@ -239,11 +260,11 @@ and typecheck_application
       match typeof_parse_tree arg_tree ctx with 
       | Ok (arg_typ, _) when typ_equals arg_typ a -> 
         Ok (PApp ((fun_tree, arg_tree)), ctx) 
-      | Ok unexpected_typ -> Error (TypeError (expected_found a unexpected_typ))
+      | Ok (unexpected_typ, _) -> Error (TypeError ("ln 248" ^ expected_found a unexpected_typ))
       | Error e -> Error e
     end 
   | Error e -> Error e
-  | Ok typ -> let err_msg = expected_found (TFun (TAlpha, TAlpha)) typ in 
+  | Ok (typ, _) -> let err_msg = "ln 252 " ^ expected_found (TFun (TAlpha, TAlpha)) typ in 
     Error (TypeError err_msg)
 
 and typecheck_binary_bool 
@@ -257,7 +278,7 @@ and typecheck_binary_bool
   | (Ok (TBool, _), Ok (r_typ, _)) -> Error (TypeError (expected_found TBool r_typ))
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e
-  | (Ok l_typ, Ok r_typ) -> Error (TypeError (expected_found TBool l_typ))
+  | (Ok (l_typ, _), Ok (r_typ, _)) -> Error (TypeError (expected_found TBool l_typ))
 
 and typecheck_do_return 
     (do_tree : parse_tree) 
@@ -270,36 +291,24 @@ and typecheck_do_return
   | (Ok (typ, _), Ok _) -> Error  (TypeError (expected_found TUnit typ))
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e 
-(*let id = e1 in e2 *)
-(*and typeof_e2 e_2 ctx = 
-  match typeof_parse_tree e_2 ctx with
-  | Ok (TFun (_, b)) -> Ok b
-  | Ok (TTable,ctx) -> Ok (TTable,ctx)
-  | Ok (TBool,ctx) -> Ok (TBool, ctx)
-  | Ok (TTuple,ctx) -> Ok (TTuple,ctx)
-  | Ok (TAttributeList,ctx) -> Ok (TAttributeList, ctx)
-  | Ok (TMapConfig,ctx) -> Ok (TMapConfig,ctx)
-  | Ok (TUnit,ctx) -> Ok (TUnit,ctx)
-  | Ok (TAlpha,ctx) -> Ok (TAlpha,ctx)
-  | Ok (TString,ctx) -> Ok (TString,ctx)
-  | Error e -> Error e
-  | _ -> failwith "Unimplemented"*)
 
-(*and typeof_e1 e_1 e_2 ctx = 
-  match typeof_parse_tree e_1 ctx, e_2 with
-  | Ok (TFun (_, b)) -> typeof_e2 e_2 ctx
-  | Ok (TTable,ctx) -> typeof_e2 e_2 ctx
-  | Ok (TBool,ctx) -> typeof_e2 e_2 ctx
-  | Ok (TTuple,ctx) -> typeof_e2 e_2 ctx
-  | Ok (TAttributeList,ctx) -> typeof_e2 e_2 ctx
-  | Ok (TMapConfig,ctx) -> typeof_e2 e_2 ctx
-  | Ok (TUnit,ctx) -> typeof_e2 e_2 ctx
-  | Ok (TAlpha,ctx) -> typeof_e2 e_2 ctx
-  | Ok (TString,ctx) -> typeof_e2 e_2 ctx
-  | Error e -> Error e
-  | _ -> failwith "Unimplemented"*)
-
-let ast_of_parse_tree (p_tree: parse_tree) (full_ctx : typ_context): expression = 
+let ast_of_parse_tree 
+    (p_tree: parse_tree) 
+    (full_ctx : typ_context): expression = 
   match p_tree with 
-  | PApp (f_var, argument) -> failwith "Unimplemented"
-  | _ -> failwith "Unimplemented"
+  | PApp (f_var, argument) -> failwith "Unimplemented - ast_of_parse_tree"
+  | _ -> failwith "Unimplemented - ast_of_parse_tree"
+
+let ast_of_string str : (Ast.expression, static_error) result =
+  let p_tree = Parse.parse str in 
+  Printf.printf "%s\n" (string_of_p_tree p_tree);
+  match typeof_parse_tree p_tree starting_context with
+  | Ok (typ, full_ctx) -> 
+    Printf.printf "\n ** Typechecking Passed **\n";
+    if typ = TTable 
+    then Ok (ast_of_parse_tree p_tree full_ctx) 
+    else Error (UnexpectedTopLevelType typ)
+  | Error e -> Error e
+
+
+

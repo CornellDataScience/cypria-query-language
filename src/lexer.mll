@@ -66,7 +66,9 @@ let char_for_hexadecimal_code lexbuf i =
 (******************************************************************)
 (* Lexer body *)
 (******************************************************************)
-(* type expression = 
+(* Inserted AST types for ease of access.
+
+type expression = 
   (** A base-level SQL table. Like [SQLTable "RESERVES"]. *)
   | SQLTable of string
   | Filter of cypr_bool * expression
@@ -100,14 +102,15 @@ and attribute_list = string list
 and tuple_or_expression = 
   | Tuple of string list 
   | Expression of expression *)
+
 let newline = ('\013'* '\010')
 let blank = [' ' '\009' '\012']+
 let lowercase = ['a'-'z']
 let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9']
 let id = identchar+
-
-let two_param = "filter" | "contains"
-let three_param = "filter_min" | "filter_max"
+(* Idea for generalizing keywords, should not be needed anymore *)
+(* let two_param = "filter" | "contains"
+let three_param = "filter_min" | "filter_max" *)
 
 let decimal_literal =
   ['0'-'9'] ['0'-'9' '_']*
@@ -153,10 +156,14 @@ rule token = parse
         { LET }
   | "in"
         { IN }
-  | two_param
+  | "do"
+        {DO}
+  | "return"
+        {RETURN}
+  (* | two_param
         {TWO_PARAM}
   | three_param
-        {THREE_PARAM}
+        {THREE_PARAM} *)
   | id
         {ID (Lexing.lexeme lexbuf) }
   | eof
