@@ -11,7 +11,7 @@ let is_capitalized s =
 
 %token <string> INT
 %token <string> ID
-%token EQUAL AND BOOL OR NOT FILTER LET IN TWO_PARAM THREE_PARAM DO RETURN
+%token EQUAL AND BOOL OR NOT FILTER LET IN DO RETURN
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token COMMA SEMICOLON
 %token EOF
@@ -58,16 +58,18 @@ expr:
         { PApp(PApp(PApp (PVar id, e1), e2), e3)}
   | LET; e1 = simple_expr; EQUAL; e2 = expr; IN; e3 = expr
         { PLet ((e1, TString),e2, e3) }
-  | NOT; e = expr; 
+  | BOOL; e1 = boolean_phrase; BOOL;
+        { e1}
+  /* | NOT; e = expr; 
         { PNot (e) }
-  | e1 = expr;  AND; e2 = expr;
+  | e1 = expr; AND; e2 = expr;
         { PAnd(e1, e2) }
-  | e1 = expr; OR; e2 = expr
+  | e1 = expr; OR; e2 = expr;
         { POr(e1, e2) }
-  | e1 = expr; EQUAL; e2 = expr
+  | e1 = expr; EQUAL; e2 = expr;
         { PEqual(e1, e2) }
   | BOOL; e1 = simple_expr; BOOL;
-        { PSQLBool(e1, TBool)}
+        { PSQLBool(e1, TBool)} */
   
 /* I think for lists-like things we need a function that loops through and parses each element.
   | e = elt; COMMA; e1 = simple_expr
@@ -81,6 +83,18 @@ var_or_table:
             {if (is_capitalized e )
             then PSQLTable (e,TTable) 
             else PVar (e)}
+boolean_phrase:
+      | NOT; e = boolean_phrase; 
+        { PNot (e) }
+      | e1 = boolean_phrase; AND; e2 = boolean_phrase;
+        { PAnd(e1, e2) }
+      | e1 = boolean_phrase; OR; e2 = boolean_phrase;
+        { POr(e1, e2) }
+      | e1 = boolean_phrase; EQUAL; e2 = boolean_phrase;
+        { PEqual(e1, e2) }
+      | e1 = simple_expr; 
+        { PSQLBool(e1, TBool)}
+        
 simple_expr:
       | e = ID;
             {e}
@@ -91,7 +105,7 @@ simple_expr:
         { PSQLBool e } */
               
 
-%inline unop:
+/* %inline unop:
   | NOT { PNot }
 
 %inline binop:
@@ -99,4 +113,4 @@ simple_expr:
   | OR { POr }
   | EQUAL { PEqual }
 
-  ;
+  ; */
