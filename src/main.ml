@@ -32,8 +32,8 @@ let execute_input_v2 () : unit =
   Printf.printf "enter Cypria>";
   let prog = read_line () in 
   match Static_analyzer.ast_of_string prog with 
-  | Ok exp -> Printf.printf "Standard of given program: %s\n" 
-                (Reverse_parser.string_of_ast exp);
+  | Ok exp -> Printf.printf "%s\n"
+                (Interpreter.eval exp Variable.empty_env);
   | Error e -> Printf.printf "%s\n" (Static_analyzer.string_of_static_error e)
 let _ = execute_input_v2 ()
 
