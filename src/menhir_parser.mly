@@ -68,17 +68,6 @@ expr:
         { PSQLBool(e1, TBool)}
   | e1 = expr; EQUAL; e2 = expr
         { PEqual(e1, e2) }
-        
-  /* | FILTER; LPAREN; e1 = simple_expr; RPAREN; LPAREN; e2 = simple_expr; RPAREN
-        { PApp(PApp (PVar "filter", PSQLBool (e1,TBool)), PSQLTable (e2,TTable)) }
-  | NOT; LPAREN; e = simple_expr; RPAREN;
-        { PNot (PSQLBool (e,TBool)) }
-  | e1 = simple_expr; AND; e2 = simple_expr
-        { PAnd(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
-  | e1 = simple_expr; OR; e2 = simple_expr
-        { POr(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) }
-  | e1 = simple_expr; EQUAL; e2 = simple_expr
-        { PEqual(PSQLBool (e1,TBool), PSQLBool (e2,TBool)) } */
 /* I think for lists-like things we need a function that loops through and parses each element.
   | e = elt; COMMA; e1 = simple_expr
         { PTuple (e, e1) }
