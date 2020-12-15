@@ -228,7 +228,6 @@ and typecheck
         end
       | Error e -> Error e 
     end
-
   (*Ok _ -> Error ((UnknownValue ("Unknown variable: " ^ id))*)
   | PDoReturn (do_p_tree, return_p_tree) -> 
     typecheck_do_return do_p_tree return_p_tree p_tree ctx 
@@ -295,7 +294,7 @@ let rec ast_of_parse_tree
     (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.expression, static_error) result = 
   match p_tree with 
-  | PApp (f_var, argument) -> Error (UnknownValue ("Unknown function application: " ^ string_of_p_tree p_tree))
+  | PApp _ -> ast_of_application_parse_tree p_tree full_ctx 
   | PVar (id) -> Ok (Var id)
   | PSQLTable (str, _) -> failwith "qx27" 
   | PSQLBool (bool_str, _) -> Error (UnexpectedTopLevelType TBool)
@@ -308,12 +307,100 @@ let rec ast_of_parse_tree
   | PLet ((id, _), p1, p2) -> failwith "ar727"
   | PDoReturn (p1, p2) -> failwith "ar727"
   | PString _ -> Error (UnexpectedTopLevelType TString)
-  | _ -> failwith "Unimplemented - ast_of_parse_tree"
 
+and ast_of_application_parse_tree 
+    p_tree
+    full_ctx : (Ast.expression, static_error) result =
+  match p_tree with 
+  | PApp (PApp(PVar "filter", b_tree), p_tree) -> begin 
+      match (ast_of_parse_tree p_tree full_ctx), 
+            (cypr_bool_of_p_tree b_tree full_ctx) with 
+      | Ok exp, Ok bool -> Ok (Filter (bool, exp))
+      | Error e1, _ -> Error e1
+      | _, Error e2 -> Error e2
+    end 
+  | PApp (PApp(PVar "map", config_tree), exp_tree) -> begin 
+      match (ast_of_map_config config_tree full_ctx), 
+            (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok map_config, Ok exp -> Ok (Map (map_config, exp))
+      | Error e1, _ -> Error e1
+      | _, Error e2 -> Error e2
+    end 
+  | PApp (PApp (PApp
+                  (PVar "filter_min", 
+                   PAttributeList (lst, _)), 
+                PString (str, _)), exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Filter_min (lst, str, exp))
+      | Error e1 -> Error e1
+    end 
+  | PApp (PApp (PApp
+                  (PVar "filter_max", 
+                   PAttributeList (lst, _)), 
+                PString (str, _)), exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Filter_min (lst, str, exp))
+      | Error e1 -> Error e1
+    end 
+  | PApp (PApp (PVar "count_instances", PAttributeList(lst, _)), exp_tree) -> 
+    begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (CountInst (lst, exp))
+      | Error e1 -> Error e1
+    end 
+  | PApp (PApp (PApp (PVar "join", bool_tree), exp1_tree), exp2_tree) -> 
+    begin 
+      match (cypr_bool_of_p_tree bool_tree full_ctx), 
+            (ast_of_parse_tree exp1_tree full_ctx),  
+            (ast_of_parse_tree exp2_tree full_ctx) with 
+      | Ok bool, Ok e1, Ok e2 -> Ok (Join (bool, e1, e2))
+      | Error e, _, _ | _, Error e, _ | _, _, Error e -> Error e
+    end 
+  | _ -> 
+    Error 
+      (TypeError "Unrecognized function when building expression syntax tree.")
+
+and ast_of_map_config 
+    p_tree 
+    ctx : (Ast.map_configuration, static_error) result =
+  match p_tree with 
+  | PApp (PVar "project_cols", PAttributeList (lst, _)) -> 
+    Ok (ProjectCols (lst))
+  | _ -> Error 
+           (TypeError "Expected map configuration while building syntax tree.")
 and side_effect_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.side_effect, static_error) result = 
   match p_tree with 
-  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TUnit)))
+  | PApp (PApp (PApp 
+                  (PVar "insert", 
+                   PAttributeList(lst1, _)), 
+                PAttributeList(lst2, _)), 
+          PString (str, _)) ->  Ok (Insert (lst1, Some lst2, str))
+  | PApp (PApp 
+            (PVar "delete", 
+             bool_tree), 
+          PString (str, _)) -> begin 
+      match (cypr_bool_of_p_tree bool_tree full_ctx) with 
+      | Ok bool -> Ok (Delete (Some bool, str))
+      | Error e -> Error e
+    end
+  | PApp (PApp 
+            (PVar "assign", 
+             PString (str, _)), 
+          exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Assign (str, exp))
+      | Error e -> Error e
+    end
+  | PApp 
+      (PVar "ignore", exp_tree) -> begin 
+      match (ast_of_parse_tree exp_tree full_ctx) with 
+      | Ok exp -> Ok (Ignore (exp))
+      | Error e -> Error e
+    end
+  | _ -> Error 
+           (TypeError ("Expected type, when building syntax tree: " 
+                       ^ (string_of_typ TUnit)))
 
 and cypr_bool_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.cypr_bool, static_error) result = 
@@ -323,7 +410,12 @@ and cypr_bool_of_p_tree (p_tree: parse_tree)
   | POr (p1, p2) -> failwith "qx27"
   | PEqual _ -> failwith "ar727"
   | PNot p1 -> failwith "qx27"
+  | PApp _ -> cypr_bool_of_application p_tree full_ctx
   | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TBool)))
+
+and cypr_bool_of_application p_tree ctx : (Ast.cypr_bool, static_error) result = 
+  match p_tree with 
+  | _ -> Error (TypeError ("Expected function that returns cypria_bool."))
 
 and tuple_or_expression_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.tuple_or_expression, static_error) result = 
