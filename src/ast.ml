@@ -20,20 +20,20 @@ type 'a typed = 'a * cypria_type
     parser. The parse tree is parsed by the static analyzer for consistency 
     and type-checking and converted into the [Ast : expression] *)
 type parse_tree = 
-  | PApp of (parse_tree * parse_tree)
-  | PVar of id
-  | PSQLTable of string typed
-  | PSQLBool of string typed
-  | PAnd of (parse_tree * parse_tree)
-  | POr of (parse_tree * parse_tree)
+  | PApp of (parse_tree * parse_tree) (*ar727*)
+  | PVar of id (* ar727 *)
+  | PSQLTable of string typed (* qx27 *)
+  | PSQLBool of string typed (* qx27 *)
+  | PAnd of (parse_tree * parse_tree) (* qx27 *)
+  | POr of (parse_tree * parse_tree) (* qx27 *)
   | PEqual of (parse_tree * parse_tree)
-  | PNot of parse_tree
-  | PTuple of (string list) typed
-  | PAttributeList of (string list) typed
+  | PNot of parse_tree (* qx27 *)
+  | PTuple of (string list) typed (*qx27*)
+  | PAttributeList of (string list) typed (*ar727*)
   (* TODO: ar727 change typechcking to ignore typ *)
-  | PLet of id typed * parse_tree * parse_tree
-  | PDoReturn of parse_tree * parse_tree
-  | PString of string typed
+  | PLet of id typed * parse_tree * parse_tree (*ar727*)
+  | PDoReturn of parse_tree * parse_tree (*ar727*)
+  | PString of string typed (* ar727 *)
 
 let _ = PAttributeList ((["name"; "dob"; "major"]), TAttributeList)
 

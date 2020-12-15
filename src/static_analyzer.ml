@@ -32,7 +32,6 @@ let starting_context : typ_context = [
   ("count", curry_fun_typ [TAttributeList; TTable; TTable]);
   ("join",curry_fun_typ [TBool; TTable; TTable; TTable]);
   (* Different syntax than Parser V1 *)
-  ("do_return", curry_fun_typ [TUnit; TTable; TTable]);
   (* TODO(ar727): Currently, optional arguments are required, 
      let's see if we should keep it, or come up with a better system. *)
   (* [TString] argument is the name of the Table being 
@@ -288,16 +287,26 @@ and typecheck_do_return
   | (Ok (TUnit, _), Ok (TTable, _)) -> Ok (full_p_tree, ctx)
   | (Ok (TUnit, _), Ok (typ, _)) -> Error (TypeError (expected_found TTable typ))
   | (Ok (typ, _), Ok (TTable, _)) -> Error (TypeError (expected_found TUnit typ))
-  | (Ok (typ, _), Ok _) -> Error  (TypeError (expected_found TUnit typ))
+  | (Ok (typ, _), Ok _) -> Error (TypeError (expected_found TUnit typ))
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e 
 
 let ast_of_parse_tree 
     (p_tree: parse_tree) 
-    (full_ctx : typ_context): expression = 
+    (full_ctx : typ_context): (Ast.expression, static_error) result = 
   match p_tree with 
   | PApp (f_var, argument) -> failwith "Unimplemented - ast_of_parse_tree"
   | _ -> failwith "Unimplemented - ast_of_parse_tree"
+
+and side_effect_of_p_tree (p_tree: parse_tree) 
+    (full_ctx : typ_context): (Ast.side_effect, static_error) result = 
+  failwith "Unimplemented"
+and cypr_bool_of_p_tree (p_tree: parse_tree) 
+    (full_ctx : typ_context): (Ast.cypr_bool, static_error) result = 
+  failwith "Unimplemented"
+and tuple_or_expression_of_p_tree (p_tree: parse_tree) 
+    (full_ctx : typ_context): (Ast.tuple_or_expression, static_error) result = 
+  failwith "Unimplemented"
 
 let ast_of_string str : (Ast.expression, static_error) result =
   let p_tree = Parse.parse str in 
