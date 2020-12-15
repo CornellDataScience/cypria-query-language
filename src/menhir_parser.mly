@@ -64,10 +64,11 @@ expr:
         { PAnd(e1, e2) }
   | e1 = expr; OR; e2 = expr
         { POr(e1, e2) }
-  | BOOL; e1 = simple_expr; BOOL;
-        { PSQLBool(e1, TBool)}
   | e1 = expr; EQUAL; e2 = expr
         { PEqual(e1, e2) }
+  | BOOL; e1 = simple_expr; BOOL;
+        { PSQLBool(e1, TBool)}
+  
 /* I think for lists-like things we need a function that loops through and parses each element.
   | e = elt; COMMA; e1 = simple_expr
         { PTuple (e, e1) }

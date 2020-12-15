@@ -111,7 +111,7 @@ let id = identchar+
 (* Idea for generalizing keywords, should not be needed anymore *)
 (* let two_param = "filter" | "contains"
 let three_param = "filter_min" | "filter_max" *)
-
+(*filter($sailorssid$=$100$)(Sailors)*)
 let decimal_literal =
   ['0'-'9'] ['0'-'9' '_']*
 let hex_digit =
@@ -160,10 +160,6 @@ rule token = parse
         {DO}
   | "return"
         {RETURN}
-  (* | two_param
-        {TWO_PARAM}
-  | three_param
-        {THREE_PARAM} *)
   | id
         {ID (Lexing.lexeme lexbuf) }
   | eof
