@@ -292,7 +292,9 @@ and typecheck_do_return
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e 
 
-let ast_of_parse_tree (p_tree: parse_tree) (full_ctx : typ_context): expression = 
+let ast_of_parse_tree 
+    (p_tree: parse_tree) 
+    (full_ctx : typ_context): expression = 
   match p_tree with 
   | PApp (f_var, argument) -> failwith "Unimplemented - ast_of_parse_tree"
   | _ -> failwith "Unimplemented - ast_of_parse_tree"
