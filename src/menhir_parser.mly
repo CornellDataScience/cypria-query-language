@@ -22,7 +22,7 @@ let is_capitalized s =
 
 parse_expression:
   | e = expr; EOF
-        {e}
+        { e }
   ;
 
 /* 
@@ -33,7 +33,7 @@ parse_phrase:
         { raise End_of_file }
 	; */
 
-/* (* Not sure if this is right -- David *)
+/* Not sure if this is right -- David
 elt:
   | e = string
         { TString e }
@@ -44,7 +44,7 @@ elt:
 
 
 expr:
-/* Is this table or string? lower case is PVar, uppercase is PSQLTable*/
+/* Is this table or string? lower case is PVar, uppercase is PSQLTable */
   | e = var_or_table
         { e }
 /* keeping filter for backup, but theoretically not needed */
@@ -69,10 +69,10 @@ expr:
   ;
 
 var_or_table:
-      |e = ID;
-            {if (is_capitalized e )
-            then PSQLTable (e,TTable) 
-            else PVar (e)}
+      | e = ID;
+            { if (is_capitalized e )
+                then PSQLTable (e,TTable) 
+              else PVar (e) }
 boolean_phrase:
       | NOT; e = boolean_phrase; 
         { PNot (e) }
@@ -83,11 +83,11 @@ boolean_phrase:
       | e1 = boolean_phrase; EQUAL; e2 = boolean_phrase;
         { PEqual(e1, e2) }
       | e1 = simple_expr; 
-        { PSQLBool(e1, TBool)}
+        { PSQLBool(e1, TBool) }
         
 simple_expr:
       | e = ID;
-            {e}
+            { e }
       ;
   /* | LPAREN; e = expr; RPAREN
         { PSQLTable e }
