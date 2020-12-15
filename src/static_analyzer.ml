@@ -291,22 +291,45 @@ and typecheck_do_return
   | (Error e, _) -> Error e 
   | (Ok _, Error e) -> Error e 
 
-let ast_of_parse_tree 
+let rec ast_of_parse_tree 
     (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.expression, static_error) result = 
   match p_tree with 
-  | PApp (f_var, argument) -> failwith "Unimplemented - ast_of_parse_tree"
+  | PApp (f_var, argument) -> Error (UnknownValue ("Unknown function application: " ^ string_of_p_tree p_tree))
+  | PVar (id) -> Ok (Var id)
+  | PSQLTable (str, _) -> failwith "qx27" 
+  | PSQLBool (bool_str, _) -> Error (UnexpectedTopLevelType TBool)
+  | PAnd _ -> Error (UnexpectedTopLevelType TBool)
+  | POr _ -> Error (UnexpectedTopLevelType TBool)
+  | PEqual _ -> Error (UnexpectedTopLevelType TBool)
+  | PNot _ -> Error (UnexpectedTopLevelType TBool)
+  | PTuple _ -> Error (UnexpectedTopLevelType TTuple)
+  | PAttributeList _ -> Error (UnexpectedTopLevelType TAttributeList)
+  | PLet ((id, _), p1, p2) -> failwith "ar727"
+  | PDoReturn (p1, p2) -> failwith "ar727"
+  | PString _ -> Error (UnexpectedTopLevelType TString)
   | _ -> failwith "Unimplemented - ast_of_parse_tree"
 
 and side_effect_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.side_effect, static_error) result = 
-  failwith "Unimplemented"
+  match p_tree with 
+  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TUnit)))
+
 and cypr_bool_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.cypr_bool, static_error) result = 
-  failwith "Unimplemented"
+  match p_tree with 
+  | PSQLBool (bool_str, _) -> failwith "qx27"
+  | PAnd (p1, p2) -> failwith "qx27"
+  | POr (p1, p2) -> failwith "qx27"
+  | PEqual _ -> failwith "ar727"
+  | PNot p1 -> failwith "qx27"
+  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TBool)))
+
 and tuple_or_expression_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.tuple_or_expression, static_error) result = 
-  failwith "Unimplemented"
+  match p_tree with 
+  | PTuple (lst, _) -> failwith "qx27"
+  | _ -> Error (TypeError ("Expected type: " ^ (string_of_typ TTuple)))
 
 let ast_of_string str : (Ast.expression, static_error) result =
   let p_tree = Parse.parse str in 
@@ -315,7 +338,7 @@ let ast_of_string str : (Ast.expression, static_error) result =
   | Ok (typ, full_ctx) -> 
     Printf.printf "\n ** Typechecking Passed **\n";
     if typ = TTable 
-    then Ok (ast_of_parse_tree p_tree full_ctx) 
+    then ast_of_parse_tree p_tree full_ctx
     else Error (UnexpectedTopLevelType typ)
   | Error e -> Error e
 
