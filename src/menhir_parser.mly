@@ -13,7 +13,7 @@ let is_capitalized s =
 %token <string> ID
 %token EQUAL AND BOOL OR NOT FILTER LET IN DO RETURN BOOLEANS
 %token LPAREN RPAREN LBRACKET RBRACKET
-%token COMMA SEMICOLON
+%token COMMA SEMICOLON QUOTE
 %token EOF
 
 %start <Ast.parse_tree> parse_expression
@@ -59,9 +59,11 @@ expr:
   | id =  simple_expr; LPAREN; e1 = expr ; RPAREN; LPAREN; e2 = expr ; RPAREN; LPAREN; e3 = expr ; RPAREN;
         { PApp(PApp(PApp (PVar id, e1), e2), e3)}
   | LET; e1 = simple_expr; EQUAL; e2 = expr; IN; e3 = expr
-        { PLet ((e1, TString),e2, e3) }
-  | BOOL; e1 = boolean_phrase; BOOL;
-        { e1}
+        { PLet ((e1, TTable),e2, e3) }
+  | e1 = boolean_phrase 
+        { e1 }
+  | QUOTE; e1 = simple_expr; QUOTE; 
+        {PString (e1, TString)} 
   | xs = delimited(LPAREN, separated_nonempty_list(COMMA, simple_expr), RPAREN);
         { PTuple (xs, TTuple) }
   | xs = delimited(LBRACKET, separated_nonempty_list(SEMICOLON, simple_expr), RBRACKET);
@@ -82,7 +84,7 @@ boolean_phrase:
         { POr(e1, e2) }
       | e1 = boolean_phrase; EQUAL; e2 = boolean_phrase;
         { PEqual(e1, e2) }
-      | e1 = simple_expr; 
+      | BOOL; e1 = simple_expr; BOOL;
         { PSQLBool(e1, TBool) }
         
 simple_expr:

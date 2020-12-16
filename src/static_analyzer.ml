@@ -321,9 +321,20 @@ let rec ast_of_parse_tree
   | PNot _ -> Error (UnexpectedTopLevelType TBool)
   | PTuple _ -> Error (UnexpectedTopLevelType TTuple)
   | PAttributeList _ -> Error (UnexpectedTopLevelType TAttributeList)
-  | PLet ((id, _), p1, p2) -> failwith "ar727"
+  | PLet ((id, _), p1, p2) -> ast_of_let_parse_tree p_tree full_ctx
   | PDoReturn (p1, p2) -> failwith "ar727"
   | PString _ -> Error (UnexpectedTopLevelType TString)
+
+and ast_of_let_parse_tree 
+    p_tree 
+    full_ctx : (Ast.expression, static_error) result =
+  match p_tree with 
+  | PLet ((id, _), p1, p2) -> begin 
+      match (ast_of_parse_tree p1 full_ctx), (ast_of_parse_tree p2 full_ctx) with 
+      | Ok exp1, Ok exp2 -> Ok (Let (id, exp1, exp2))
+      | Error e, _ | _, Error e -> Error e
+    end
+  | _ -> Error (TypeError "Expected let while building abstract syntax tree.")
 
 and ast_of_application_parse_tree 
     p_tree

@@ -106,7 +106,7 @@ and tuple_or_expression =
 let newline = ('\013'* '\010')
 let blank = [' ' '\009' '\012']+
 let lowercase = ['a'-'z']
-let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9' '.' '"' '%' '.' '=' '>' '<' ]
+let identchar = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9' '.' '%' '.' '=' '>' '<' ]
 let id = identchar+
 let sql_bool = ['A'-'Z' 'a'-'z' '_' '\'' '0'-'9' ' ' '\009' '\012' '.' '=' '>' '<' ' ']
 let booleans = sql_bool+
@@ -166,7 +166,8 @@ rule token = parse
         { BOOLEANS (Lexing.lexeme lexbuf) }  *)
   | id
         { ID (Lexing.lexeme lexbuf) }
-
+  | '\"'
+        { QUOTE }
   | eof
         { EOF }
   | _
