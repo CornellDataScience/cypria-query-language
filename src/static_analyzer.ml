@@ -155,7 +155,7 @@ let rec typeof_parse_tree
           | Ok (TFun (_, b), ctx_fun_arg) -> Ok (b, ctx') 
           | Error e -> Error e
           | Ok (unexpected_typ, ctx) -> 
-            let err_msg = "ln 124" ^ expected_found (TFun (TAlpha, TAlpha)) unexpected_typ 
+            let err_msg = expected_found (TFun (TAlpha, TAlpha)) unexpected_typ 
             in Error (TypeError err_msg)
         end
       | Error e -> Error e
@@ -277,11 +277,11 @@ and typecheck_application
       match typeof_parse_tree arg_tree ctx with 
       | Ok (arg_typ, _) when typ_equals arg_typ a -> 
         Ok (PApp ((fun_tree, arg_tree)), ctx) 
-      | Ok (unexpected_typ, _) -> Error (TypeError ("ln 248" ^ expected_found a unexpected_typ))
+      | Ok (unexpected_typ, _) -> Error (TypeError (expected_found a unexpected_typ))
       | Error e -> Error e
     end 
   | Error e -> Error e
-  | Ok (typ, _) -> let err_msg = "ln 252 " ^ expected_found (TFun (TAlpha, TAlpha)) typ in 
+  | Ok (typ, _) -> let err_msg = expected_found (TFun (TAlpha, TAlpha)) typ in 
     Error (TypeError err_msg)
 
 and typecheck_binary_bool 
