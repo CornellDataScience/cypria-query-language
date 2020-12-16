@@ -42,10 +42,10 @@ function generate_rows($num)
   <!-- Content -->
   <div class="main-container">
     <form id="code-box">
-      <textarea class="code-text" id="code">map (project_cols [name]) (Sailors)</textarea>
+      <textarea class="code-text" id="code">filter ($count>3$) (Sailors)</textarea>
     </form>
     <div id="code-output">
-      <pre><code class="output">SELECT name FROM (SELECT * FROM (Sailors))</code></pre>
+      <pre><code class="output">SELECT * FROM (SELECT * FROM (Sailors)) WHERE (count>3)</code></pre>
     </div>
   </div>
 </body>
