@@ -46,10 +46,10 @@
       <div class="playground section">
         <h1>Try Cypria</h1>
         <form id="code-box">
-          <textarea id="code">map (project_cols [name]) (Sailors)</textarea>
+          <textarea id="code">filter ($count>3$) (Sailors)</textarea>
         </form>
         <div id="code-output">
-          <pre><code class="output">SELECT name FROM (SELECT * FROM (Sailors))</code></pre>
+          <pre><code class="output">SELECT * FROM (SELECT * FROM (Sailors)) WHERE (count>3)</code></pre>
         </div>
         <button id="run-button">Run code</button>
       </div>
