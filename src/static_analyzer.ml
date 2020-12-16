@@ -29,15 +29,17 @@ let starting_context : typ_context = [
   ("map", curry_fun_typ [TMapConfig; TTable; TTable]);
   ("filter_min", curry_fun_typ [TAttributeList; TString; TTable; TTable]);
   ("filter_max", curry_fun_typ [TAttributeList; TString; TTable; TTable]);
-  ("count", curry_fun_typ [TAttributeList; TTable; TTable]);
+  ("count_instances", curry_fun_typ [TAttributeList; TTable; TTable]);
   ("join",curry_fun_typ [TBool; TTable; TTable; TTable]);
   (* Different syntax than Parser V1 *)
   (* TODO(ar727): Currently, optional arguments are required, 
      let's see if we should keep it, or come up with a better system. *)
   (* [TString] argument is the name of the Table being 
      inserted/deleted into/from *)
-  ("insert", curry_fun_typ [TAttributeList; TAttributeList; TString; TUnit]);
-  ("delete", curry_fun_typ [TBool; TAttributeList; TUnit]);
+  ("insert", curry_fun_typ [TTuple; TString; TUnit]);
+  ("insert_with_lables", curry_fun_typ [TTuple; TAttributeList; TString; TUnit]);
+  ("delete", curry_fun_typ [TBool; TString; TUnit]);
+  ("delete_table", curry_fun_typ [TString; TUnit]);
   (* Different syntax than Parser V1 - might want to consider making this a 
      parse tree level expression. *)
   ("assign", curry_fun_typ [TString; TTable; TUnit]);
@@ -322,7 +324,11 @@ let rec ast_of_parse_tree
   | PTuple _ -> Error (UnexpectedTopLevelType TTuple)
   | PAttributeList _ -> Error (UnexpectedTopLevelType TAttributeList)
   | PLet ((id, _), p1, p2) -> ast_of_let_parse_tree p_tree full_ctx
-  | PDoReturn (p1, p2) -> failwith "ar727"
+  | PDoReturn (p1, p2) -> begin 
+      match (side_effect_of_p_tree p1 full_ctx), (ast_of_parse_tree p2 full_ctx) with 
+      | Ok exp1, Ok exp2 -> Ok (Do_return (exp1, exp2))
+      | Error e, _ | _, Error e -> Error e
+    end
   | PString _ -> Error (UnexpectedTopLevelType TString)
 
 and ast_of_let_parse_tree 
@@ -396,14 +402,19 @@ and ast_of_map_config
     Ok (ProjectCols (lst))
   | _ -> Error 
            (TypeError "Expected map configuration while building syntax tree.")
+
 and side_effect_of_p_tree (p_tree: parse_tree) 
     (full_ctx : typ_context): (Ast.side_effect, static_error) result = 
   match p_tree with 
   | PApp (PApp (PApp 
-                  (PVar "insert", 
-                   PAttributeList(lst1, _)), 
+                  (PVar "insert_with_lables", 
+                   PTuple(lst1, _)), 
                 PAttributeList(lst2, _)), 
           PString (str, _)) ->  Ok (Insert (lst1, Some lst2, str))
+  | PApp (PApp 
+            (PVar "insert", 
+             PTuple(lst1, _)), 
+          PString (str, _)) ->  Ok (Insert (lst1, None, str))
   | PApp (PApp 
             (PVar "delete", 
              bool_tree), 
@@ -412,6 +423,9 @@ and side_effect_of_p_tree (p_tree: parse_tree)
       | Ok bool -> Ok (Delete (Some bool, str))
       | Error e -> Error e
     end
+  | PApp 
+      (PVar "delete_table", 
+       PString (str, _)) -> Ok (Delete(None, str))
   | PApp (PApp 
             (PVar "assign", 
              PString (str, _)), 
@@ -434,21 +448,23 @@ and cypr_bool_of_p_tree (p_tree: parse_tree)
     (full_ctx : typ_context): (Ast.cypr_bool, static_error) result = 
   match p_tree with 
   | PSQLBool (bool_str, _) -> Ok (SQLBool bool_str)
-  | PAnd (p1, p2) -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+  | PAnd (p1, p2) -> 
+    let x = match cypr_bool_of_p_tree p1 full_ctx with 
       | Ok exp -> exp 
       | _ ->  SQLBool "fail" in 
     let y = match cypr_bool_of_p_tree p2 full_ctx with
       | Ok exp -> exp
       | _ -> SQLBool "fail" in
     Ok (And (x,y))
-  | POr (p1, p2) -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
+  | POr (p1, p2) -> 
+    let x = match cypr_bool_of_p_tree p1 full_ctx with 
       | Ok exp -> exp 
       | _ ->  SQLBool "fail" in 
     let y = match cypr_bool_of_p_tree p2 full_ctx with
       | Ok exp -> exp
       | _ -> SQLBool "fail" in
     Ok (Or (x,y))
-  | PEqual _ -> Ok (SQLBool "equal")
+  | PEqual (PString (str1, _), PString (str2, _)) -> Ok (Like (str1, str2))
   | PNot p1 -> let x = match cypr_bool_of_p_tree p1 full_ctx with 
       | Ok exp -> exp 
       | _ ->  SQLBool "fail" in 

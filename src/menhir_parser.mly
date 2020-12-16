@@ -11,6 +11,7 @@ let is_capitalized s =
 
 %token <string> INT
 %token <string> ID
+%token <string> STRING
 %token EQUAL AND BOOL OR NOT FILTER LET IN DO RETURN BOOLEANS
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token COMMA SEMICOLON QUOTE
@@ -60,11 +61,11 @@ expr:
         { PApp(PApp(PApp (PVar id, e1), e2), e3)}
   | LET; e1 = simple_expr; EQUAL; e2 = expr; IN; e3 = expr
         { PLet ((e1, TTable),e2, e3) }
-  | e1 = boolean_phrase 
+  | e1 = boolean_phrase; 
         { e1 }
-  | QUOTE; e1 = simple_expr; QUOTE; 
-        {PString (e1, TString)} 
-  | xs = delimited(LPAREN, separated_nonempty_list(COMMA, simple_expr), RPAREN);
+  | e1 = STRING;
+        {PString ((String.sub e1 1 (String.length e1 - 2)), TString)} 
+  | xs = delimited(LPAREN, separated_nonempty_list(COMMA, tuple_expr), RPAREN);
         { PTuple (xs, TTuple) }
   | xs = delimited(LBRACKET, separated_nonempty_list(SEMICOLON, simple_expr), RBRACKET);
         { PAttributeList (xs, TAttributeList) }        
@@ -82,8 +83,8 @@ boolean_phrase:
         { PAnd(e1, e2) }
       | e1 = boolean_phrase; OR; e2 = boolean_phrase;
         { POr(e1, e2) }
-      | e1 = boolean_phrase; EQUAL; e2 = boolean_phrase;
-        { PEqual(e1, e2) }
+      | BOOL; e1 = simple_expr; BOOL; EQUAL; BOOL; e2 = simple_expr; BOOL;
+        { PEqual(PString (e1, TString), PString (e2, TString)) }
       | BOOL; e1 = simple_expr; BOOL;
         { PSQLBool(e1, TBool) }
         
@@ -95,7 +96,14 @@ simple_expr:
         { PSQLTable e }
   | BOOL; e = expr; BOOL
         { PSQLBool e } */
-              
+
+tuple_expr: 
+      | e = ID; 
+            { e }
+      | e = STRING;
+            { e }
+      ;
+
 /* sql_bool_expr: 
       | e = BOOLEANS; 
             {e} 
